@@ -1,5 +1,5 @@
 /* ==========================================================================
-   DESIGN SYSTEM & THEMING: CAPTAIN CLAW GAMIFIED PORTFOLIO
+   GLOBAL STYLES & DESIGN SYSTEM: CAPTAIN CLAW NEXT.JS PORTFOLIO
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Outfit:wght@300;400;600;700&family=Pirata+One&display=swap');
@@ -120,7 +120,7 @@ button {
    1. MAIN MENU SCREEN (CLAW STYLE)
    ========================================================================== */
 #main-menu {
-  background: linear-gradient(rgba(7, 23, 29, 0.4), rgba(7, 23, 29, 0.8)), url('assets/menu_bg.png');
+  background: linear-gradient(rgba(7, 23, 29, 0.4), rgba(7, 23, 29, 0.8)), url('/assets/menu_bg.png');
   background-size: cover;
   background-position: center;
   display: flex;
@@ -250,18 +250,10 @@ button {
   flex: 1;
 }
 
-.char-dialog-title {
-  font-family: var(--font-heading);
-  color: var(--color-gold-bright);
-  font-size: 0.9rem;
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-
 .char-dialog-text {
   font-size: 0.8rem;
   line-height: 1.3;
-  color: var(--color-text-light);
+  color: var(--text-light);
   font-style: italic;
 }
 
@@ -422,7 +414,7 @@ button {
   bottom: 1.5rem;
   left: 0;
   width: 100%;
-  display: none; /* Flex on touch screens */
+  display: flex; /* Flex on touch screens */
   justify-content: space-between;
   padding: 0 2rem;
   z-index: 100;

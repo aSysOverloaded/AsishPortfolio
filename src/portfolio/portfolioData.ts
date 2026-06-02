@@ -1,4 +1,65 @@
-export const portfolioData = {
+/* ==========================================================================
+   PORTFOLIO STRONGLY-TYPED DATA LAYER: CAPTAIN CLAW NEXT.JS MIGRATION
+   ========================================================================== */
+
+export interface Skill {
+  name: string;
+  category: "Frontend" | "Backend" | "Tools";
+  level: number;
+  color: string;
+  description: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  role: string;
+  tech: string[];
+  description: string;
+  highlights: string[];
+  github: string;
+  live: string;
+}
+
+export interface Experience {
+  year: string;
+  role: string;
+  company: string;
+  description: string;
+}
+
+export interface PersonalInfo {
+  name: string;
+  title: string;
+  subTitle: string;
+  avatar: string;
+  bio: string;
+  location: string;
+  resumeLink: string;
+}
+
+export interface About {
+  story: string;
+  philosophy: string;
+}
+
+export interface Contact {
+  email: string;
+  github: string;
+  linkedin: string;
+  twitter: string;
+}
+
+export interface PortfolioData {
+  personalInfo: PersonalInfo;
+  about: About;
+  skills: Skill[];
+  projects: Project[];
+  experience: Experience[];
+  contact: Contact;
+}
+
+export const portfolioData: PortfolioData = {
   personalInfo: {
     name: "Asish",
     title: "Full Stack Web Developer",

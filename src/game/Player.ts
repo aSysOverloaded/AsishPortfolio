@@ -1,53 +1,69 @@
 /* ==========================================================================
-   PLAYER PHYSICS & ANIMATION MODEL: CAPTAIN CLAW PLAYER CONTROLLER
+   PLAYER PHYSICS & ANIMATION MODEL: CAPTAIN CLAW PLAYER (TS VERSION)
    ========================================================================== */
 
-import { Sound } from "./Sound.js";
+import { Sound } from "./Sound";
+
+export interface ILevel {
+  tileSize: number;
+  width: number;
+  height: number;
+  isSolid(col: number, row: number): boolean;
+  isLadderAt(x: number, y: number): boolean;
+}
 
 export class Player {
-  constructor(x, y) {
+  public x: number;
+  public y: number;
+  public w = 20;
+  public h = 44;
+
+  public vx = 0;
+  public vy = 0;
+
+  // Constants
+  public speed = 3.5;
+  public climbSpeed = 2.5;
+  public jumpForce = 8.0;
+  public doubleJumpForce = 7.0;
+  public gravity = 0.4;
+  public friction = 0.82;
+
+  // Bools
+  public grounded = false;
+  public climbing = false;
+  public facingLeft = false;
+  public hasDoubleJumped = false;
+
+  // Key configurations
+  public keys = {
+    leftPressed: false,
+    rightPressed: false,
+    upPressed: false,
+    downPressed: false,
+    spacePressed: false
+  };
+
+  // Animation ticks
+  public walkCycle = 0;
+  public isWalking = false;
+
+  // Checkpoints
+  private spawnX: number;
+  private spawnY: number;
+
+  // Grace / Gamefeel Timers
+  private coyoteTimer = 0;
+  private jumpBufferTimer = 0;
+
+  constructor(x: number, y: number) {
     this.x = x;
     this.y = y;
-    this.w = 30;
-    this.h = 44;
-
-    // Movement Velocities
-    this.vx = 0;
-    this.vy = 0;
-
-    // Physical constants
-    this.speed = 3.5;
-    this.climbSpeed = 2.5;
-    this.jumpForce = 8.0;
-    this.doubleJumpForce = 7.0;
-    this.gravity = 0.4;
-    this.friction = 0.82;
-
-    // State Bools
-    this.grounded = false;
-    this.climbing = false;
-    this.facingLeft = false;
-    this.hasDoubleJumped = false;
-
-    // Keyboard bindings state reference
-    this.keys = {
-      leftPressed: false,
-      rightPressed: false,
-      upPressed: false,
-      downPressed: false,
-      spacePressed: false
-    };
-
-    // Procedural animation parameters
-    this.walkCycle = 0;
-    this.isWalking = false;
-    
-    // Checkpoints
     this.spawnX = x;
     this.spawnY = y;
   }
 
-  resetToCheckpoint() {
+  public resetToCheckpoint() {
     this.x = this.spawnX;
     this.y = this.spawnY;
     this.vx = 0;
@@ -56,10 +72,43 @@ export class Player {
     this.grounded = false;
   }
 
-  update(level) {
-    // 1. INPUT PROCESSING
+  public setCheckpoint(x: number, y: number) {
+    this.spawnX = x;
+    this.spawnY = y;
+  }
+
+  public update(level: ILevel) {
     this.isWalking = false;
 
+    // Grace / Gamefeel Timers
+    if (this.grounded || this.climbing) {
+      this.coyoteTimer = 6;
+    } else {
+      if (this.coyoteTimer > 0) this.coyoteTimer--;
+    }
+
+    if (this.jumpBufferTimer > 0) this.jumpBufferTimer--;
+
+    // Process buffered jumps
+    if (this.jumpBufferTimer > 0) {
+      if (this.climbing) {
+        this.climbing = false;
+        this.vy = -this.jumpForce;
+        this.hasDoubleJumped = false;
+        this.jumpBufferTimer = 0;
+        this.coyoteTimer = 0;
+        Sound.playJump();
+      } else if (this.grounded || this.coyoteTimer > 0) {
+        this.vy = -this.jumpForce;
+        this.grounded = false;
+        this.hasDoubleJumped = false;
+        this.jumpBufferTimer = 0;
+        this.coyoteTimer = 0;
+        Sound.playJump();
+      }
+    }
+
+    // 1. INPUT HANDLING
     if (this.climbing) {
       this.vy = 0;
       if (this.keys.upPressed) {
@@ -86,10 +135,9 @@ export class Player {
       if (!level.isLadderAt(playerCenter.x, playerCenter.y)) {
         this.climbing = false;
       } else if (!hasLadderAbove && this.keys.upPressed) {
-        // We are on the top ladder tile, climbing up onto the platform
+        // Topmost tile stepping snap
         const tileTopY = currentTileY * level.tileSize;
         if (this.y + this.h <= tileTopY + 12) {
-          // Auto snap feet to the top of the platform!
           this.y = tileTopY - this.h;
           this.climbing = false;
           this.grounded = true;
@@ -98,7 +146,7 @@ export class Player {
         }
       }
     } else {
-      // Standard Platforming Physics
+      // Normal Platforming physics
       if (this.keys.leftPressed) {
         this.vx = -this.speed;
         this.facingLeft = true;
@@ -108,12 +156,11 @@ export class Player {
         this.facingLeft = false;
         this.isWalking = true;
       } else {
-        this.vx *= this.friction; // apply friction
+        this.vx *= this.friction;
       }
 
-      // Gravity
       this.vy += this.gravity;
-      if (this.vy > 12) this.vy = 12; // Terminal velocity limit
+      if (this.vy > 12) this.vy = 12;
 
       // Check if overlapping ladder to start climbing
       const leftCol = Math.floor(this.x / level.tileSize);
@@ -132,71 +179,53 @@ export class Player {
           this.climbing = true;
           this.vx = 0;
           this.vy = 0;
-          // Snap the player to the center of the ladder
           this.x = (climbingLadderCol * level.tileSize + level.tileSize / 2) - this.w / 2;
         }
       }
     }
 
-    // Handle jump action safely on rising edge triggers
-    // Checked inside engine key handler to avoid repeated jumps on hold.
-
-    // 2. COLLISION & POSITION INTEGRATION
-    
-    // X-Axis Movement & Collision
+    // 2. POSITION INTEGRATION & SOLID BLOCKS COLLISION
     this.x += this.vx;
     this.checkCollisionsX(level);
 
-    // Y-Axis Movement & Collision
     this.y += this.vy;
     this.grounded = false;
     this.checkCollisionsY(level);
 
-    // Walk cycle animation ticker
     if (this.isWalking && this.grounded) {
       this.walkCycle += 0.25;
     } else {
       this.walkCycle = 0;
     }
 
-    // World floor bounds checks
     if (this.y > level.height + 100) {
       this.fallIntoWater();
     }
   }
 
-  jump() {
-    if (this.climbing) {
-      this.climbing = false;
-      this.vy = -this.jumpForce;
-      this.hasDoubleJumped = false;
-      Sound.playJump();
-    } else if (this.grounded) {
-      this.vy = -this.jumpForce;
-      this.grounded = false;
-      this.hasDoubleJumped = false;
-      Sound.playJump();
-    } else if (!this.hasDoubleJumped) {
-      // Double Jump mechanics
+  public jump() {
+    this.jumpBufferTimer = 6;
+
+    // Double jump is triggered instantly if we are in the air and Coyote Time has expired
+    if (!this.grounded && !this.climbing && this.coyoteTimer <= 0 && !this.hasDoubleJumped) {
       this.vy = -this.doubleJumpForce;
       this.hasDoubleJumped = true;
+      this.jumpBufferTimer = 0;
       Sound.playJump();
     }
   }
 
-  fallIntoWater() {
+  private fallIntoWater() {
     Sound.playHurt();
     this.resetToCheckpoint();
   }
 
-  checkCollisionsX(level) {
-    // Collisions with solid blocks
+  private checkCollisionsX(level: ILevel) {
     const leftTile = Math.floor(this.x / level.tileSize);
     const rightTile = Math.floor((this.x + this.w) / level.tileSize);
     const topTile = Math.floor(this.y / level.tileSize);
     const bottomTile = Math.floor((this.y + this.h - 2) / level.tileSize);
 
-    // Bound checks
     if (this.x < 0) {
       this.x = 0;
       this.vx = 0;
@@ -216,7 +245,7 @@ export class Player {
     }
   }
 
-  checkCollisionsY(level) {
+  private checkCollisionsY(level: ILevel) {
     const leftTile = Math.floor(this.x / level.tileSize);
     const rightTile = Math.floor((this.x + this.w - 1) / level.tileSize);
     const topTile = Math.floor(this.y / level.tileSize);
@@ -225,16 +254,14 @@ export class Player {
     for (let col = leftTile; col <= rightTile; col++) {
       if (level.isSolid(col, topTile) && this.vy < 0) {
         this.y = (topTile + 1) * level.tileSize;
-        this.vy = 0.1; // bounce slightly
+        this.vy = 0.1;
         break;
       }
 
-      // Check for one-way platform behavior at ladder tops
+      // One-way landing at top of ladders
       const isLadder = level.isLadderAt(col * level.tileSize + level.tileSize/2, bottomTile * level.tileSize + level.tileSize/2);
       const isLadderAbove = level.isLadderAt(col * level.tileSize + level.tileSize/2, (bottomTile - 1) * level.tileSize + level.tileSize/2);
       
-      // We treat a tile as solid if it's naturally solid, OR if it's the top tile of a ladder
-      // and we are falling downwards, not pressing down, and not currently climbing
       const treatAsSolid = level.isSolid(col, bottomTile) || 
         (isLadder && !isLadderAbove && this.vy >= 0 && !this.keys.downPressed && !this.climbing);
 
@@ -242,8 +269,7 @@ export class Player {
         const feetPrevY = this.y + this.h - this.vy;
         const tileTopY = bottomTile * level.tileSize;
         
-        // Ensure we land on top only if we were previously above it
-        if (feetPrevY <= tileTopY + 8) {
+        if (feetPrevY <= tileTopY + Math.max(8, this.vy + 2)) {
           this.y = tileTopY - this.h;
           this.vy = 0;
           this.grounded = true;
@@ -254,21 +280,18 @@ export class Player {
     }
   }
 
-  // Draw procedural animated Claw character
-  draw(ctx, cameraX) {
+  // Draw procedural cat pirate Claw
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     ctx.save();
     
-    // Position translation
     const px = this.x - cameraX;
     const py = this.y;
 
-    // Flip horizontal drawing when facing left
     ctx.translate(px + this.w/2, py + this.h/2);
     if (this.facingLeft) {
       ctx.scale(-1, 1);
     }
 
-    // 1. SHADOW (under character)
     if (this.grounded) {
       ctx.fillStyle = "rgba(0,0,0,0.2)";
       ctx.beginPath();
@@ -276,51 +299,49 @@ export class Player {
       ctx.fill();
     }
 
-    // Let's draw an awesome pirate cat character!
-    
-    // Walking tilt angle
     let bodyBob = 0;
     let limbSwing = 0;
     if (this.isWalking && this.grounded) {
       bodyBob = Math.sin(this.walkCycle) * 2;
       limbSwing = Math.sin(this.walkCycle) * 8;
     } else if (!this.grounded) {
-      bodyBob = -4; // floating stretch
+      bodyBob = -4;
     }
 
-    // 2. LEGS & BOOTS
-    ctx.fillStyle = "#523624"; // brown boots
+    // Legs
+    ctx.fillStyle = "#523624";
     
-    // Left Leg
     ctx.save();
     ctx.translate(-6, this.h/2 - 8);
     if (this.grounded) ctx.rotate((limbSwing * Math.PI) / 180);
     ctx.fillRect(-4, 0, 7, 8);
-    ctx.fillStyle = "#cca300"; // gold trim
+    ctx.fillStyle = "#cca300";
     ctx.fillRect(-4, 0, 7, 2);
     ctx.restore();
 
-    // Right Leg
     ctx.fillStyle = "#523624";
     ctx.save();
     ctx.translate(6, this.h/2 - 8);
     if (this.grounded) ctx.rotate((-limbSwing * Math.PI) / 180);
     ctx.fillRect(-3, 0, 7, 8);
-    ctx.fillStyle = "#cca300"; // gold trim
+    ctx.fillStyle = "#cca300";
     ctx.fillRect(-3, 0, 7, 2);
     ctx.restore();
 
-    // 3. BODY (Pirate Coat)
-    ctx.fillStyle = "#0d2a35"; // Deep ocean blue coat
+    // Body (Coat)
+    ctx.fillStyle = "#0d2a35";
     ctx.beginPath();
-    ctx.roundRect(-10, -8 + bodyBob, 20, 22, [4, 4, 1, 1]);
+    // Use standard roundRect fallback logic
+    ctx.beginPath();
+    ctx.roundRect
+      ? ctx.roundRect(-10, -8 + bodyBob, 20, 22, [4, 4, 1, 1])
+      : ctx.rect(-10, -8 + bodyBob, 20, 22);
     ctx.fill();
 
-    // Coat details (golden buttons, red undershirt sash)
-    ctx.fillStyle = "#d92b2b"; // red sash
+    ctx.fillStyle = "#d92b2b";
     ctx.fillRect(-3, 5 + bodyBob, 6, 9);
     
-    ctx.fillStyle = "#ffd700"; // golden buttons
+    ctx.fillStyle = "#ffd700";
     ctx.beginPath();
     ctx.arc(-4, -1 + bodyBob, 1.5, 0, Math.PI * 2);
     ctx.arc(-4, 4 + bodyBob, 1.5, 0, Math.PI * 2);
@@ -328,14 +349,15 @@ export class Player {
     ctx.arc(4, 4 + bodyBob, 1.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. CAT HEAD
+    // Head
     ctx.save();
     ctx.translate(0, -18 + bodyBob);
     
-    // Fur colors (warm amber golden fur cat)
     ctx.fillStyle = "#df8b32";
     ctx.beginPath();
-    ctx.roundRect(-11, -9, 22, 18, [8, 8, 4, 4]);
+    ctx.roundRect
+      ? ctx.roundRect(-11, -9, 22, 18, [8, 8, 4, 4])
+      : ctx.rect(-11, -9, 22, 18);
     ctx.fill();
 
     // Ears
@@ -345,7 +367,7 @@ export class Player {
     ctx.lineTo(-4, -9);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "#ffcccc"; // ear inner
+    ctx.fillStyle = "#ffcccc";
     ctx.beginPath();
     ctx.moveTo(-9, -10);
     ctx.lineTo(-11, -15);
@@ -360,7 +382,7 @@ export class Player {
     ctx.lineTo(4, -9);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = "#ffcccc"; // ear inner
+    ctx.fillStyle = "#ffcccc";
     ctx.beginPath();
     ctx.moveTo(9, -10);
     ctx.lineTo(11, -15);
@@ -368,9 +390,9 @@ export class Player {
     ctx.closePath();
     ctx.fill();
 
-    // Eyepatch (black leather band + eyepatch block over right eye)
+    // Eyepatch
     ctx.fillStyle = "#111";
-    ctx.fillRect(1, -3, 6, 6); // eyepatch block
+    ctx.fillRect(1, -3, 6, 6);
     ctx.lineWidth = 1.5;
     ctx.strokeStyle = "#111";
     ctx.beginPath();
@@ -378,7 +400,7 @@ export class Player {
     ctx.lineTo(10, 0);
     ctx.stroke();
 
-    // Left Eye (cat gold slit eye)
+    // Eye
     ctx.fillStyle = "#fff";
     ctx.beginPath();
     ctx.ellipse(-5, -1, 3.5, 3.5, 0, 0, Math.PI*2);
@@ -388,7 +410,7 @@ export class Player {
     ctx.ellipse(-5, -1, 1, 3, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Snout / Nose
+    // Nose
     ctx.fillStyle = "#111";
     ctx.beginPath();
     ctx.moveTo(-1.5, 2);
@@ -397,18 +419,17 @@ export class Player {
     ctx.closePath();
     ctx.fill();
 
-    // White cheeks/whisker padding
+    // Cheeks
     ctx.fillStyle = "#fff8f0";
     ctx.beginPath();
     ctx.arc(-2.5, 4.5, 2.5, 0, Math.PI * 2);
     ctx.arc(2.5, 4.5, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // 5. PIRATE HAT & BANDANA
-    ctx.fillStyle = "#d92b2b"; // red bandanna wrapping
+    // Bandana
+    ctx.fillStyle = "#d92b2b";
     ctx.fillRect(-11, -10, 22, 4);
     
-    // Bandanna ties floating behind head
     ctx.save();
     ctx.translate(-10, -8);
     ctx.rotate((Math.sin(this.walkCycle * 0.8) * 12 * Math.PI) / 180);
@@ -421,7 +442,7 @@ export class Player {
     ctx.fill();
     ctx.restore();
 
-    // Pirate Hat (black bicorn/tricorn shape)
+    // Pirate Hat
     ctx.fillStyle = "#222";
     ctx.beginPath();
     ctx.moveTo(-15, -10);
@@ -431,7 +452,6 @@ export class Player {
     ctx.closePath();
     ctx.fill();
 
-    // Gold trim on hat
     ctx.strokeStyle = "#ffd700";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
@@ -439,32 +459,28 @@ export class Player {
     ctx.quadraticCurveTo(0, -18, 15, -10);
     ctx.stroke();
 
-    // White Skull decal center of hat
     ctx.fillStyle = "#eee";
     ctx.beginPath();
     ctx.arc(0, -14, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillRect(-2, -12, 4, 1.5);
 
-    ctx.restore(); // end head
+    ctx.restore();
 
-    // 6. ARMS / SWORD (Claw holds a cutlass!)
+    // Cutlass
     ctx.fillStyle = "#df8b32";
     ctx.save();
     ctx.translate(-11, 2 + bodyBob);
     
-    // Front Arm swinging slightly
     if (this.isWalking && this.grounded) {
       ctx.rotate((-limbSwing * Math.PI) / 180);
     }
-    ctx.fillRect(-3, 0, 5, 8); // sleeve
+    ctx.fillRect(-3, 0, 5, 8);
     
-    // Gold Cutlass Handle + Silver Blade
-    ctx.fillStyle = "#ffd700"; // hilt
+    ctx.fillStyle = "#ffd700";
     ctx.fillRect(-4, 7, 7, 2);
     
-    // Blade
-    ctx.fillStyle = "#cbd5e1"; // steel
+    ctx.fillStyle = "#cbd5e1";
     ctx.beginPath();
     ctx.moveTo(-2, 7);
     ctx.lineTo(-2, -10);
@@ -473,6 +489,6 @@ export class Player {
     ctx.fill();
     ctx.restore();
 
-    ctx.restore(); // end player
+    ctx.restore();
   }
 }

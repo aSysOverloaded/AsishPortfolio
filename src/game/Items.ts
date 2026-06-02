@@ -1,11 +1,33 @@
 /* ==========================================================================
-   GAME COLLECTIBLES & ENTITIES: CAPTAIN CLAW ENTITY MODELS
+   GAME COLLECTIBLES & ENTITIES: CAPTAIN CLAW ENTITY MODELS (TS VERSION)
    ========================================================================== */
 
-import { Sound } from "./Sound.js";
+import { Sound } from "./Sound";
 
-// Helper to check if two rects intersect (AABB collision)
-function rectIntersect(r1, r2) {
+export interface IEngine {
+  addCoins(amount: number): void;
+  addGem(amount: number): void;
+  spawnTextPopup(text: string, x: number, y: number, color?: string): void;
+  openPortfolioModal(contentKey: string, title: string): void;
+  setPlayerCheckpoint(x: number, y: number): void;
+}
+
+export interface IPlayer {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  keys: {
+    upPressed: boolean;
+    downPressed: boolean;
+  };
+}
+
+// Helper to check AABB intersections
+function rectIntersect(
+  r1: { x: number; y: number; w: number; h: number },
+  r2: { x: number; y: number; w: number; h: number }
+): boolean {
   return (
     r1.x < r2.x + r2.w &&
     r1.x + r1.w > r2.x &&
@@ -14,58 +36,59 @@ function rectIntersect(r1, r2) {
   );
 }
 
-// 1. BASE ENTITY
-class GameEntity {
-  constructor(x, y, w, h) {
+// Base Entity
+export abstract class GameEntity {
+  public x: number;
+  public y: number;
+  public w: number;
+  public h: number;
+  public collected = false;
+
+  constructor(x: number, y: number, w: number, h: number) {
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
-    this.collected = false;
   }
 
-  update(player) {}
-  draw(ctx, cameraX) {}
+  abstract update(player: IPlayer, engine: IEngine): void;
+  abstract draw(ctx: CanvasRenderingContext2D, cameraX: number): void;
 }
 
-// 2. GOLDEN COIN
+// Golden Coin
 export class Coin extends GameEntity {
-  constructor(x, y) {
+  private bounceTimer: number;
+  private angle: number;
+
+  constructor(x: number, y: number) {
     super(x, y, 20, 20);
     this.bounceTimer = Math.random() * 100;
     this.angle = Math.random() * Math.PI;
   }
 
-  update(player, engine) {
+  public update(player: IPlayer, engine: IEngine) {
     if (this.collected) return;
 
-    // Hover floating effect
     this.bounceTimer += 0.05;
     this.angle += 0.05;
 
-    // AABB Check with Player
     if (rectIntersect(this, player)) {
       this.collected = true;
       engine.addCoins(1);
       Sound.playCoin();
-      
-      // Spawn flying text
       engine.spawnTextPopup("+100 Loot", this.x + 10, this.y);
     }
   }
 
-  draw(ctx, cameraX) {
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     if (this.collected) return;
 
     ctx.save();
-    // Parallax floating
     const floatY = Math.sin(this.bounceTimer) * 4;
     
-    // Draw golden retro coin (rotating)
     ctx.translate(this.x + this.w/2 - cameraX, this.y + this.h/2 + floatY);
     ctx.scale(Math.abs(Math.sin(this.angle)), 1);
 
-    // Inner gold circle
     ctx.beginPath();
     ctx.arc(0, 0, this.w/2, 0, Math.PI * 2);
     ctx.fillStyle = "#ffd700";
@@ -74,7 +97,6 @@ export class Coin extends GameEntity {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Inner ring detail
     ctx.beginPath();
     ctx.arc(0, 0, this.w/4, 0, Math.PI * 2);
     ctx.strokeStyle = "#cca300";
@@ -85,16 +107,20 @@ export class Coin extends GameEntity {
   }
 }
 
-// 3. SKILLS GLOWING GEM
+// Glowing Skill Gem
 export class Gem extends GameEntity {
-  constructor(x, y, color = "#39ff14", skillName = "JS") {
+  public color: string;
+  public skillName: string;
+  private bounceTimer: number;
+
+  constructor(x: number, y: number, color = "#39ff14", skillName = "JS") {
     super(x, y, 22, 26);
     this.color = color;
     this.skillName = skillName;
     this.bounceTimer = Math.random() * 100;
   }
 
-  update(player, engine) {
+  public update(player: IPlayer, engine: IEngine) {
     if (this.collected) return;
 
     this.bounceTimer += 0.07;
@@ -103,23 +129,19 @@ export class Gem extends GameEntity {
       this.collected = true;
       engine.addGem(1);
       Sound.playCoin();
-
-      // Trigger dialogue pop-up or popup text
       engine.spawnTextPopup(`+1 ${this.skillName} Skill!`, this.x + 10, this.y, this.color);
     }
   }
 
-  draw(ctx, cameraX) {
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     if (this.collected) return;
 
     ctx.save();
     const floatY = Math.sin(this.bounceTimer) * 5;
     
-    // Position drawing coordinates
     const px = this.x - cameraX;
     const py = this.y + floatY;
 
-    // Draw glowing diamond polygon gem
     ctx.beginPath();
     ctx.moveTo(px + this.w/2, py);
     ctx.lineTo(px + this.w, py + this.h * 0.35);
@@ -129,7 +151,6 @@ export class Gem extends GameEntity {
     ctx.lineTo(px, py + this.h * 0.35);
     ctx.closePath();
 
-    // Fill with radial gradient for premium neon glow
     const grad = ctx.createRadialGradient(px + this.w/2, py + this.h/2, 2, px + this.w/2, py + this.h/2, this.w);
     grad.addColorStop(0, "#ffffff");
     grad.addColorStop(0.3, this.color);
@@ -142,7 +163,6 @@ export class Gem extends GameEntity {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Sparkle reflection glint
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.beginPath();
     ctx.arc(px + this.w * 0.35, py + this.h * 0.3, 2, 0, Math.PI * 2);
@@ -152,22 +172,23 @@ export class Gem extends GameEntity {
   }
 }
 
-// 4. INTERACTIVE TREASURE CHEST
+// Interactive Chest
 export class TreasureChest extends GameEntity {
-  constructor(x, y, modalId, title, contentKey) {
+  public modalId: string;
+  public title: string;
+  public contentKey: string;
+  public isOpen = false;
+  public isNear = false;
+  private spriteImg: HTMLImageElement | null = null;
+
+  constructor(x: number, y: number, modalId: string, title: string, contentKey: string) {
     super(x, y, 48, 38);
     this.modalId = modalId;
     this.title = title;
     this.contentKey = contentKey;
-    this.isOpen = false;
-    this.isNear = false;
-    this.spriteImg = new Image();
-    this.spriteImg.src = "assets/treasure_chest.png";
-    this.angle = 0;
   }
 
-  update(player, engine) {
-    // Check if player is near the chest to show interact prompt
+  public update(player: IPlayer, engine: IEngine) {
     const interactionRange = {
       x: this.x - 20,
       y: this.y - 20,
@@ -177,7 +198,6 @@ export class TreasureChest extends GameEntity {
 
     if (rectIntersect(interactionRange, player)) {
       this.isNear = true;
-      // If player triggers up action (e.g. key W or UP) and chest is not open yet
       if (player.keys.upPressed && !this.isOpen) {
         this.open(engine);
       }
@@ -186,62 +206,57 @@ export class TreasureChest extends GameEntity {
     }
   }
 
-  open(engine) {
+  public open(engine: IEngine) {
     this.isOpen = true;
     Sound.playChestFanfare();
     engine.spawnTextPopup("Treasure Unlocked!", this.x + 24, this.y - 10, "#ffd700");
+    engine.setPlayerCheckpoint(this.x, this.y - 10);
     
-    // Open corresponding modal via engine modal manager
     setTimeout(() => {
       engine.openPortfolioModal(this.contentKey, this.title);
     }, 400);
   }
 
-  draw(ctx, cameraX) {
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     ctx.save();
     
     const px = this.x - cameraX;
     const py = this.y;
 
-    // Draw chest graphic
-    if (this.spriteImg.complete && this.spriteImg.naturalWidth !== 0) {
-      // Draw pixel art asset from generate_image
-      // Draw standard sizing box, crop bottom-half for open state if sprite is a spreadsheet
+    if (!this.spriteImg && typeof window !== "undefined") {
+      this.spriteImg = new Image();
+      this.spriteImg.src = "/assets/treasure_chest.png";
+    }
+
+    if (this.spriteImg && this.spriteImg.complete && this.spriteImg.naturalWidth !== 0) {
       ctx.drawImage(this.spriteImg, px, py, this.w, this.h);
     } else {
-      // Elegant vector fallback: draws beautiful wood-textured chest
       ctx.fillStyle = this.isOpen ? "#523624" : "#2e1c10";
       ctx.strokeStyle = "#ffd700";
       ctx.lineWidth = 3;
       
-      // Bottom Box
       ctx.fillRect(px, py + 12, this.w, this.h - 12);
       ctx.strokeRect(px, py + 12, this.w, this.h - 12);
 
-      // Lid Arch
       ctx.beginPath();
       if (this.isOpen) {
-        // Open lid rotated upwards
         ctx.arc(px + this.w/2, py + 6, this.w/2, Math.PI, Math.PI * 2);
         ctx.fillStyle = "#1a0f08";
         ctx.fill();
         ctx.strokeStyle = "#ffd700";
         ctx.stroke();
       } else {
-        // Closed lid arch
         ctx.arc(px + this.w/2, py + 12, this.w/2, Math.PI, Math.PI * 2);
         ctx.fillStyle = "#523624";
         ctx.fill();
         ctx.stroke();
       }
 
-      // Golden locks/details
       ctx.fillStyle = "#ffd700";
       ctx.fillRect(px + this.w/2 - 4, py + 12, 8, 8);
       ctx.strokeRect(px + this.w/2 - 4, py + 12, 8, 8);
     }
 
-    // Draw golden floating indicator if player is near and chest is closed
     if (this.isNear && !this.isOpen) {
       ctx.fillStyle = "#ffd700";
       ctx.font = "bold 11px Cinzel";
@@ -255,13 +270,15 @@ export class TreasureChest extends GameEntity {
   }
 }
 
-// 5. CLIMBABLE LADDER
+// Climbable Ladder
 export class Ladder extends GameEntity {
-  constructor(x, y, w, h) {
+  constructor(x: number, y: number, w: number, h: number) {
     super(x, y, w, h);
   }
 
-  draw(ctx, cameraX) {
+  public update(player: IPlayer, engine: IEngine) {}
+
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     ctx.save();
     ctx.strokeStyle = "#523624";
     ctx.lineWidth = 4;
@@ -269,7 +286,6 @@ export class Ladder extends GameEntity {
     const px = this.x - cameraX;
     const steps = Math.floor(this.h / 16);
 
-    // Left and Right Rails
     ctx.beginPath();
     ctx.moveTo(px + 4, this.y);
     ctx.lineTo(px + 4, this.y + this.h);
@@ -277,7 +293,6 @@ export class Ladder extends GameEntity {
     ctx.lineTo(px + this.w - 4, this.y + this.h);
     ctx.stroke();
 
-    // Rungs (Steps)
     ctx.strokeStyle = "#7a543b";
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -292,14 +307,18 @@ export class Ladder extends GameEntity {
   }
 }
 
-// 6. DECORATIONS (e.g. pirate flags, background ships)
+// Decoration Entity
 export class Decoration extends GameEntity {
-  constructor(x, y, type) {
+  public type: "barrel" | "flag";
+
+  constructor(x: number, y: number, type: "barrel" | "flag") {
     super(x, y, 40, 40);
     this.type = type;
   }
 
-  draw(ctx, cameraX) {
+  public update(player: IPlayer, engine: IEngine) {}
+
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     const px = this.x - cameraX;
     ctx.save();
 
@@ -309,12 +328,10 @@ export class Decoration extends GameEntity {
       ctx.strokeStyle = "#523624";
       ctx.strokeRect(px, this.y + 10, 24, 30);
       
-      // Iron bands
       ctx.fillStyle = "#555";
       ctx.fillRect(px, this.y + 16, 24, 3);
       ctx.fillRect(px, this.y + 30, 24, 3);
     } else if (this.type === "flag") {
-      // Skull Flag pole
       ctx.strokeStyle = "#332211";
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -322,11 +339,9 @@ export class Decoration extends GameEntity {
       ctx.lineTo(px, this.y + this.h);
       ctx.stroke();
 
-      // Black Flag
       ctx.fillStyle = "#111";
       ctx.fillRect(px, this.y, 30, 18);
       
-      // White skull detail (stylized dot)
       ctx.fillStyle = "#eee";
       ctx.beginPath();
       ctx.arc(px + 15, this.y + 9, 3, 0, Math.PI * 2);
