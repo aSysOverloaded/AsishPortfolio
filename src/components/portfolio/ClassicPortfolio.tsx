@@ -48,6 +48,7 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
           <li className="classic-nav-link"><a href="#skills">Skills</a></li>
           <li className="classic-nav-link"><a href="#projects">Projects</a></li>
           <li className="classic-nav-link"><a href="#experience">Experience</a></li>
+          <li className="classic-nav-link"><a href="#education">Education</a></li>
           <li className="classic-nav-link"><a href="#contact">Contact</a></li>
         </ul>
         <button onClick={onToggleGame} className="classic-toggle-btn">PLAY GAME</button>
@@ -155,6 +156,25 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
               <h3 className="timeline-role">{e.role}</h3>
               <div className="timeline-company">{e.company}</div>
               <p className="timeline-description">{e.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 6.5. Education Section */}
+      <section id="education" className="classic-section" aria-labelledby="education-heading">
+        <div className="section-header">
+          <h2 id="education-heading">Academy Training (Education)</h2>
+          <span className="section-header-line"></span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+          {portfolioData.education.map((edu, idx) => (
+            <div key={idx} className="skill-card" style={{ borderLeft: "3.5px solid #8c510a", paddingLeft: "15px", background: "rgba(255,255,255,0.02)" }}>
+              <span style={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 700, color: "#8c510a" }}>{edu.year}</span>
+              <h3 style={{ fontFamily: "Cinzel", fontWeight: 700, margin: "4px 0 2px 0", fontSize: "1.1rem" }}>{edu.degree}</h3>
+              <div style={{ fontSize: "0.85rem", fontStyle: "italic", opacity: 0.8, marginBottom: "2px" }}>{edu.field}</div>
+              <div style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "8px" }}>{edu.institution}</div>
+              <p style={{ fontSize: "0.9rem", lineHeight: 1.45, opacity: 0.9 }}>{edu.description}</p>
             </div>
           ))}
         </div>

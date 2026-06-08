@@ -76,6 +76,21 @@ export default function ParchmentModal({
           </div>
         );
       }
+      case "education": {
+        return (
+          <div style={{ maxHeight: "45vh", overflowY: "auto", paddingRight: "8px" }}>
+            {portfolioData.education.map((edu, idx) => (
+              <div key={idx} style={{ marginBottom: "16px", borderLeft: "2.5px solid #8c510a", paddingLeft: "12px" }}>
+                <span style={{ fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 700, color: "#8c510a" }}>{edu.year}</span>
+                <h4 style={{ fontFamily: "Cinzel", fontWeight: 700, margin: "2px 0" }}>{edu.degree}</h4>
+                <div style={{ fontSize: "0.85rem", fontStyle: "italic", color: "#555", marginBottom: "2px" }}>{edu.field}</div>
+                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#444", marginBottom: "4px" }}>{edu.institution}</div>
+                <p style={{ fontSize: "0.9rem", lineHeight: 1.4, color: "#3e2d20" }}>{edu.description}</p>
+              </div>
+            ))}
+          </div>
+        );
+      }
       case "projects": {
         return (
           <div className="scroll-projects-list" style={{ maxHeight: "45vh", overflowY: "auto", paddingRight: "8px" }}>

@@ -50,12 +50,21 @@ export interface Contact {
   twitter: string;
 }
 
+export interface Education {
+  degree: string;
+  field: string;
+  institution: string;
+  year: string;
+  description: string;
+}
+
 export interface PortfolioData {
   personalInfo: PersonalInfo;
   about: About;
   skills: Skill[];
   projects: Project[];
   experience: Experience[];
+  education: Education[];
   contact: Contact;
 }
 
@@ -144,6 +153,16 @@ export const portfolioData: PortfolioData = {
     }
   ],
 
+  education: [
+    {
+      degree: "Bachelor of Technology",
+      field: "Computer Science & Engineering",
+      institution: "Valiant Maritime Institute of Technology",
+      year: "2018 - 2022",
+      description: "Graduated with honors. Specialized in Web Systems architectures, interactive computer graphics, and modular engineering. This academic foundation provided the rope to cross complex chasms of technical debt!"
+    }
+  ],
+  
   contact: {
     email: "asish@example.com",
     github: "https://github.com",

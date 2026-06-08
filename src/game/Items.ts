@@ -761,3 +761,153 @@ export class Boss extends GameEntity {
     ctx.restore();
   }
 }
+
+// Climbable & Swingable Pendulum Rope Entity
+export class Rope extends GameEntity {
+  public pivotX: number;
+  public pivotY: number;
+  public length: number;
+  public angle = 0.0;
+  public angleVelocity = 0.0;
+
+  constructor(x: number, y: number, length: number) {
+    // x, y specifies the pivot point of the pendulum rope
+    super(x, y, 16, length);
+    this.pivotX = x;
+    this.pivotY = y;
+    this.length = length;
+  }
+
+  public update(player: IPlayer, engine: IEngine) {
+    // 1. Natural pendulum motion gravity & friction dampening
+    const gravity = 0.025; 
+    const damping = 0.993; 
+    
+    // accel = -g/L * sin(theta)
+    const angleAccel = -(gravity / (this.length / 32)) * Math.sin(this.angle);
+    this.angleVelocity += angleAccel;
+    this.angleVelocity *= damping;
+    this.angle += this.angleVelocity;
+
+    const p = player as any;
+
+    // 2. Handle swinging controls if player is currently attached
+    if (p.swingingRope === this) {
+      // Pumping swing left/right: only apply force if input matches travel direction (or near rest)
+      if (p.keys.leftPressed && this.angleVelocity <= 0.002) {
+        this.angleVelocity -= 0.0014;
+      }
+      if (p.keys.rightPressed && this.angleVelocity >= -0.002) {
+        this.angleVelocity += 0.0014;
+      }
+      
+      // Speed clamp for game stability
+      this.angleVelocity = Math.max(-0.045, Math.min(0.045, this.angleVelocity));
+    } else {
+      // 3. Grab detection (only when player is in the air and cooldown has expired)
+      if (p.ropeGrabCooldown && p.ropeGrabCooldown > 0) return;
+      if (p.climbing || p.grounded) return;
+
+      // Find current rope end position
+      const currentLength = this.length * (p.ropeClimbProgress || 1.0);
+      const endX = this.pivotX + Math.sin(this.angle) * currentLength;
+      const endY = this.pivotY + Math.cos(this.angle) * currentLength;
+
+      // Check distance from player center to rope end
+      const playerCenterX = p.x + p.w / 2;
+      const playerCenterY = p.y + p.h / 2;
+      const dx = playerCenterX - endX;
+      const dy = playerCenterY - endY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 26) {
+        // Grab! Attach player to the rope
+        p.swingingRope = this;
+        p.ropeClimbProgress = 1.0;
+        
+        // Transfer player velocity to swing velocity
+        this.angleVelocity += p.vx * 0.003;
+      }
+    }
+  }
+
+  public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
+    ctx.save();
+    
+    const px = this.pivotX - cameraX;
+    const py = this.pivotY;
+    
+    const segments = 10;
+    const points: { x: number; y: number }[] = [];
+    
+    // Perpendicular vector to the main rope direction
+    const perpX = Math.cos(this.angle);
+    const perpY = -Math.sin(this.angle);
+    const time = Date.now();
+
+    for (let i = 0; i <= segments; i++) {
+      const t = i / segments;
+      // Projection along the straight line
+      const sx = px + Math.sin(this.angle) * this.length * t;
+      const sy = py + Math.cos(this.angle) * this.length * t;
+
+      // Flex curve due to swing velocity (inertia lag) + wind ripple waves
+      // Sine multiplier anchors the wave to 0 displacement at the pivot (t=0) and knob (t=1)
+      const amplitude = Math.sin(t * Math.PI);
+      const flex = this.angleVelocity * 135 * amplitude;
+      const ripple = Math.sin(time * 0.008 + t * 5.2) * 2.5 * amplitude;
+      
+      const displacement = flex + ripple;
+
+      points.push({
+        x: sx + perpX * displacement,
+        y: sy + perpY * displacement
+      });
+    }
+
+    const endPoint = points[points.length - 1];
+
+    // Draw the main rope strand
+    ctx.strokeStyle = "#7a543b"; // Rope brown
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+
+    // Draw rope spiral pattern (fibers)
+    ctx.strokeStyle = "#523624";
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 8]);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]); 
+
+    // Draw pivot iron ring pin
+    ctx.fillStyle = "#333333";
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#111";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Draw a neat climbing knot handle at the bottom
+    ctx.fillStyle = "#8c5230";
+    ctx.beginPath();
+    ctx.arc(endPoint.x, endPoint.y, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#402c1d";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}

@@ -34,6 +34,9 @@ export class Player {
   public climbing = false;
   public facingLeft = false;
   public hasDoubleJumped = false;
+  public swingingRope: any = null;
+  public ropeGrabCooldown = 0;
+  public ropeClimbProgress = 1.0;
 
   // Key configurations
   public keys = {
@@ -79,6 +82,56 @@ export class Player {
 
   public update(level: ILevel) {
     this.isWalking = false;
+
+    if (this.ropeGrabCooldown > 0) this.ropeGrabCooldown--;
+
+    if (this.swingingRope) {
+      // 1. Decelerate jump buffer timer
+      if (this.jumpBufferTimer > 0) this.jumpBufferTimer--;
+
+      // 2. Climb up/down the rope
+      if (this.keys.upPressed) {
+        this.ropeClimbProgress = Math.max(0.18, this.ropeClimbProgress - 0.015);
+      } else if (this.keys.downPressed) {
+        this.ropeClimbProgress = Math.min(1.0, this.ropeClimbProgress + 0.015);
+      }
+
+      // 3. Pin player coordinates to the swinging rope end, matching its wavy displacement
+      const t = this.ropeClimbProgress;
+      const currentLength = this.swingingRope.length * t;
+      const rx = this.swingingRope.pivotX + Math.sin(this.swingingRope.angle) * currentLength;
+      const ry = this.swingingRope.pivotY + Math.cos(this.swingingRope.angle) * currentLength;
+      
+      const perpX = Math.cos(this.swingingRope.angle);
+      const perpY = -Math.sin(this.swingingRope.angle);
+      
+      const amplitude = Math.sin(t * Math.PI);
+      const flex = this.swingingRope.angleVelocity * 135 * amplitude;
+      const ripple = Math.sin(Date.now() * 0.008 + t * 5.2) * 2.5 * amplitude;
+      const displacement = flex + ripple;
+
+      this.x = rx + perpX * displacement - this.w / 2;
+      this.y = ry + perpY * displacement - this.h / 2;
+      this.vx = 0;
+      this.vy = 0;
+      this.grounded = false;
+      this.climbing = false;
+      this.hasDoubleJumped = false;
+
+      // 4. Detach / Jump Off the swinging rope inheriting angular velocity + upward force
+      if (this.jumpBufferTimer > 0) {
+        const velX = Math.cos(this.swingingRope.angle) * this.swingingRope.angleVelocity * currentLength;
+        const velY = -Math.sin(this.swingingRope.angle) * this.swingingRope.angleVelocity * currentLength;
+
+        this.vx = velX;
+        this.vy = velY - 5.0; // Higher jump off the swing!
+        this.swingingRope = null;
+        this.ropeGrabCooldown = 22; // Prevent instant grab
+        this.jumpBufferTimer = 0;
+        Sound.playJump();
+      }
+      return;
+    }
 
     // Grace / Gamefeel Timers
     if (this.grounded || this.climbing) {
@@ -148,15 +201,20 @@ export class Player {
     } else {
       // Normal Platforming physics
       if (this.keys.leftPressed) {
-        this.vx = -this.speed;
+        if (this.vx > -this.speed) {
+          this.vx = -this.speed;
+        }
         this.facingLeft = true;
         this.isWalking = true;
       } else if (this.keys.rightPressed) {
-        this.vx = this.speed;
+        if (this.vx < this.speed) {
+          this.vx = this.speed;
+        }
         this.facingLeft = false;
         this.isWalking = true;
       } else {
-        this.vx *= this.friction;
+        const currentFriction = this.grounded ? this.friction : 0.98;
+        this.vx *= currentFriction;
       }
 
       this.vy += this.gravity;
