@@ -11,12 +11,14 @@ interface GameCanvasProps {
   onOpenModal: (contentKey: string, title: string) => void;
   onCoinsChange: (count: number) => void;
   onGemsChange: (count: number) => void;
+  onHealthChange: (health: number) => void;
 }
 
 export default function GameCanvas({
   onOpenModal,
   onCoinsChange,
   onGemsChange,
+  onHealthChange,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -25,6 +27,7 @@ export default function GameCanvas({
     onOpenModal,
     onCoinsChange,
     onGemsChange,
+    onHealthChange,
   });
 
   // Keep references updated on every render
@@ -33,8 +36,9 @@ export default function GameCanvas({
       onOpenModal,
       onCoinsChange,
       onGemsChange,
+      onHealthChange,
     };
-  }, [onOpenModal, onCoinsChange, onGemsChange]);
+  }, [onOpenModal, onCoinsChange, onGemsChange, onHealthChange]);
 
   useEffect(() => {
     // 1. Initialize engine
@@ -49,6 +53,9 @@ export default function GameCanvas({
     };
     Engine.onGemsChange = (count: number) => {
       callbacksRef.current.onGemsChange(count);
+    };
+    Engine.onHealthChange = (health: number) => {
+      callbacksRef.current.onHealthChange(health);
     };
 
     // 3. Setup scales resize handling

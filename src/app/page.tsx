@@ -34,6 +34,9 @@ export default function Home() {
     Engine.onStateChange = (state) => {
       setGameState(state);
     };
+    Engine.onHealthChange = (h) => {
+      setHealth(h);
+    };
 
     // 2. Detect touch capability to safely enable on-screen joystick controllers
     const isTouch = 
@@ -46,11 +49,17 @@ export default function Home() {
     const handleSwitchClassic = () => {
       Engine.switchState("classic");
     };
+    const handleSwitchMenu = () => {
+      Engine.switchState("menu");
+    };
     window.addEventListener("switch-to-classic", handleSwitchClassic);
+    window.addEventListener("switch-to-menu", handleSwitchMenu);
 
     return () => {
       Engine.onStateChange = null;
+      Engine.onHealthChange = null;
       window.removeEventListener("switch-to-classic", handleSwitchClassic);
+      window.removeEventListener("switch-to-menu", handleSwitchMenu);
     };
   }, []);
 
@@ -136,6 +145,7 @@ export default function Home() {
             onOpenModal={handleOpenModal}
             onCoinsChange={setCoins}
             onGemsChange={setGems}
+            onHealthChange={setHealth}
           />
 
           {/* Desktop HUD Hint details overlay */}

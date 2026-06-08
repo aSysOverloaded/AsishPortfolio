@@ -32,10 +32,13 @@ export class GameEngine {
   private animationFrameId: number | null = null;
   private lastTime = 0;
 
+  public health = 100;
+
   // React State Synchronization Callbacks
   public onOpenModal: ((contentKey: string, title: string) => void) | null = null;
   public onCoinsChange: ((count: number) => void) | null = null;
   public onGemsChange: ((count: number) => void) | null = null;
+  public onHealthChange: ((health: number) => void) | null = null;
   public onStateChange: ((state: "menu" | "playing" | "classic") => void) | null = null;
 
   constructor() {
@@ -52,6 +55,7 @@ export class GameEngine {
   }
 
   public startLoop() {
+    this.stopLoop(); // Halted any running animation loops to prevent parallel duplicates
     this.lastTime = performance.now();
     this.loop();
   }
@@ -89,12 +93,6 @@ export class GameEngine {
     }
 
     this.updateTextPopups();
-
-    // Victory detection when reaching the ship's stern
-    if (this.player && this.player.x >= 3050 && !this.victoryTriggered) {
-      this.victoryTriggered = true;
-      this.openPortfolioModal("victory", "VIC-TO-RY!");
-    }
   }
 
   private draw() {
@@ -123,8 +121,8 @@ export class GameEngine {
       text: text,
       x: x,
       y: y,
-      vy: -1.5,
-      timer: 45,
+      vy: -0.6,
+      timer: 100,
       color: color
     });
   }
@@ -156,7 +154,7 @@ export class GameEngine {
     ctx.shadowBlur = 4;
 
     this.textPopups.forEach(pop => {
-      const opacity = Math.min(1, pop.timer / 15);
+      const opacity = Math.min(1, pop.timer / 30);
       ctx.fillStyle = pop.color;
       ctx.globalAlpha = opacity;
       ctx.fillText(pop.text, pop.x - this.cameraX, pop.y);
@@ -227,6 +225,8 @@ export class GameEngine {
     if (this.onStateChange) this.onStateChange(newState);
 
     if (newState === "playing") {
+      this.health = 100;
+      if (this.onHealthChange) this.onHealthChange(100);
       if (this.player) this.player.resetToCheckpoint();
       Sound.resumeContext();
       if (Sound.musicEnabled) {
@@ -242,6 +242,27 @@ export class GameEngine {
     this.stopLoop();
     if (this.onOpenModal) {
       this.onOpenModal(contentKey, title);
+    }
+  }
+
+  // Health and Death systems
+  public updateHealth(amount: number) {
+    this.health = Math.max(0, Math.min(100, this.health + amount));
+    if (this.onHealthChange) this.onHealthChange(this.health);
+    if (this.health <= 0) {
+      this.handlePlayerDeath();
+    }
+  }
+
+  private handlePlayerDeath() {
+    Sound.playHurt();
+    this.spawnTextPopup("Code Crashed!", this.player?.x || 100, this.player?.y || 420, "#d92b2b");
+    this.health = 100;
+    if (this.onHealthChange) this.onHealthChange(this.health);
+    if (this.player) {
+      this.player.resetToCheckpoint();
+      this.player.vx = 0;
+      this.player.vy = 0;
     }
   }
 }

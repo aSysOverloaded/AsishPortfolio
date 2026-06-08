@@ -2,7 +2,7 @@
    LEVEL SETUP, GRID MAP & COLLISION DETECTOR: CAPTAIN CLAW LEVEL (TS VERSION)
    ========================================================================== */
 
-import { Coin, Gem, TreasureChest, Ladder, Decoration, GameEntity } from "./Items";
+import { Coin, Gem, TreasureChest, Ladder, Decoration, GameEntity, Spikes, PotionJar, Boss } from "./Items";
 
 const TILE_SIZE = 32;
 const MAP_ROWS = 18;
@@ -121,7 +121,7 @@ export class Level {
     this.entities.push(new TreasureChest(1010, 314, "skills-modal", "Cove Vault (Skills)", "skills"));
     this.entities.push(new TreasureChest(1728, 346, "projects-modal", "Captain's Ledger (Projects)", "projects"));
     this.entities.push(new TreasureChest(1980, 410, "experience-modal", "Chronicles of Battle (Experience)", "experience"));
-    this.entities.push(new TreasureChest(2976, 250, "contact-modal", "Message Dispatch (Contact)", "contact"));
+    this.entities.push(new TreasureChest(2944, 250, "contact-modal", "Message Dispatch (Contact)", "contact"));
 
     // Gold Coins Placements
     const coinPlacements = [
@@ -162,9 +162,24 @@ export class Level {
     // Decorations
     this.decorations.push(new Decoration(80, 448, "barrel"));
     this.decorations.push(new Decoration(120, 448, "barrel"));
-    this.decorations.push(new Decoration(30, 320, "flag"));
+    this.decorations.push(new Decoration(96, 408, "flag")); // Stands on initial docks floor (y=480, height=72)
     this.decorations.push(new Decoration(2600, 448, "barrel"));
-    this.decorations.push(new Decoration(2860, 160, "flag"));
+    this.decorations.push(new Decoration(3136, 216, "flag")); // Stands on pirate ship deck floor (y=288, height=72)
+
+    // Spaghetti Code Spikes placement (Static Hazards sitting perfectly on floor surfaces)
+    this.entities.push(new Spikes(320, 460)); // Stands on initial docks floor (Col 10, y=480)
+    this.entities.push(new Spikes(1280, 300)); // Stands in the middle of hanging bridge (Col 40, y=320)
+    this.entities.push(new Spikes(2048, 428)); // Stands on the stone pod podium of shrine 2 (Col 64, y=448)
+    this.entities.push(new Spikes(2720, 460)); // Stands on ship harbor dock floor just before ladder (Col 85, y=480)
+
+    // Refactor Potion Jar placements (Heals placed at logical exploration spots)
+    this.entities.push(new PotionJar(480, 256)); // Docks tower elevated platform (Col 15, y=288)
+    this.entities.push(new PotionJar(960, 280)); // Floating in mid-air to reward a jump in Skills Valley (Col 30, y=320)
+    this.entities.push(new PotionJar(1728, 352)); // Sitting on shrine 1 elevated podium next to Projects chest (Col 54, y=384)
+    this.entities.push(new PotionJar(2880, 256)); // Sitting on ship deck (Col 90, y=288)
+    
+    // Boss Nemesis Captain Red-Tail (Code review duel boss)
+    this.entities.push(new Boss(3072, 240)); // Stands on pirate ship deck at column 96 (y=288)
   }
 
   public update(player: { x: number; y: number; w: number; h: number; keys: { upPressed: boolean; downPressed: boolean; } }, engine: any) {

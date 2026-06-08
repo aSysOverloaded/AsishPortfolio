@@ -155,15 +155,35 @@ export default function ParchmentModal({
       case "victory": {
         return (
           <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: "1.05rem", lineHeight: 1.5, marginBottom: "1.2rem", fontWeight: 700, fontFamily: "Cinzel" }}>
-              Ahoy, Legendary Recruiter!
+            <p style={{ fontSize: "1.08rem", lineHeight: 1.5, marginBottom: "1rem", fontWeight: 700, fontFamily: "Cinzel", color: "#8c510a" }}>
+              The Code Review Duel!
             </p>
+            
+            {/* Scroll Dialogue Container */}
+            <div style={{ 
+              maxHeight: "30vh", 
+              overflowY: "auto", 
+              padding: "10px 14px", 
+              border: "1px dashed rgba(46,28,16,0.35)", 
+              borderRadius: "4px", 
+              background: "rgba(255,255,255,0.4)", 
+              marginBottom: "1rem", 
+              textAlign: "left", 
+              fontSize: "0.85rem", 
+              lineHeight: 1.45,
+              color: "#3e2d20"
+            }}>
+              <p style={{ margin: "6px 0" }}><strong>Captain Red-Tail:</strong> &ldquo;Halt, Claw! You think you can claim Asish's portfolio? Your ancient sails are no match for my legacy Spaghetti code!&rdquo;</p>
+              <p style={{ margin: "6px 0" }}><strong>Captain Claw:</strong> &ldquo;Your Spaghetti code is already obsolete, Red-Tail! Look at my HUD, I have harvested all of Asish's Tech Skills!&rdquo;</p>
+              <p style={{ margin: "6px 0" }}><strong>Captain Red-Tail:</strong> &ldquo;Argh! Next.js? TypeScript? High-performance canvassing? Impossible! My technical debt... is crushing me!&rdquo;</p>
+              <p style={{ margin: "6px 0", color: "#b33a3a", fontWeight: 700, fontStyle: "italic" }}>*POOF! Red-Tail's server crashes, and he flees into the legacy archives!*</p>
+              <p style={{ margin: "6px 0" }}><strong>Captain Claw:</strong> &ldquo;Victory! The codebase is refactored, and Captain Asish is ready for legendary developer hires!&rdquo;</p>
+            </div>
+
             <p style={{ lineHeight: 1.4, marginBottom: "1.2rem", fontSize: "0.95rem" }}>
-              You have braved the platform chasms, climbed the mainmast ladders, harvested all the glowing skill gems, and unlocked the <strong>5 legendary treasures</strong> of Captain Asish!
+              You have braved all Spaghetti hazards, gathered all tech gems, and cleared the final code review duel!
             </p>
-            <p style={{ lineHeight: 1.4, marginBottom: "1.5rem", fontSize: "0.95rem" }}>
-              Your recruitment name is now recorded in the chronicles of the high seas. You may transition to the professional <strong>Classic Portfolio Mode</strong> to review Asish's credentials, or remain on the ship deck to celebrate!
-            </p>
+            
             <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
               <button 
                 onClick={() => {
@@ -177,11 +197,15 @@ export default function ParchmentModal({
                 CLASSIC PORTFOLIO
               </button>
               <button 
-                onClick={onClose} 
+                onClick={() => {
+                  onClose();
+                  const event = new CustomEvent("switch-to-menu");
+                  window.dispatchEvent(event);
+                }} 
                 className="form-submit" 
                 style={{ cursor: "pointer", flex: 1, padding: "8px 12px", fontFamily: "Cinzel", fontWeight: 700, background: "#7a543b", border: "1.5px solid #2e1c10" }}
               >
-                STAY ON DECK
+                MAIN MENU
               </button>
             </div>
           </div>
@@ -195,7 +219,21 @@ export default function ParchmentModal({
   return (
     <div className={`modal-overlay active`} role="dialog" aria-modal="true">
       <div className="parchment-scroll" role="document">
-        <button onClick={onClose} className="parchment-close" aria-label="Close Scroll modal">X</button>
+        <button 
+          onClick={() => {
+            if (contentKey === "victory") {
+              onClose();
+              const event = new CustomEvent("switch-to-classic");
+              window.dispatchEvent(event);
+            } else {
+              onClose();
+            }
+          }} 
+          className="parchment-close" 
+          aria-label="Close Scroll modal"
+        >
+          X
+        </button>
         <h2 className="parchment-title">{title}</h2>
         <div className="scroll-content">
           {renderContent()}

@@ -33,7 +33,7 @@ export default function HUD({ coins, gems, health }: HUDProps) {
         </div>
         <div className="hud-stat-item">
           <span className="hud-icon-gem" aria-hidden="true"></span>
-          <span id="hud-gem-count">{gems}</span>
+          <span id="hud-gem-count" style={{ fontSize: "0.85rem", fontFamily: "Cinzel", fontWeight: 700 }}>{gems} / 6 Skills</span>
         </div>
       </div>
     </div>
