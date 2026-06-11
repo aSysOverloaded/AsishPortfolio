@@ -20,6 +20,7 @@ export default function Home() {
   const [coins, setCoins] = useState(0);
   const [gems, setGems] = useState(0);
   const [health, setHealth] = useState(100);
+  const [collectedTraits, setCollectedTraits] = useState<string[]>([]);
 
   // Parchment Modal Triggers
   const [modalActive, setModalActive] = useState(false);
@@ -36,6 +37,9 @@ export default function Home() {
     };
     Engine.onHealthChange = (h) => {
       setHealth(h);
+    };
+    Engine.onTraitsChange = (traits) => {
+      setCollectedTraits([...traits]);
     };
 
     // 2. Detect touch capability to safely enable on-screen joystick controllers
@@ -58,6 +62,7 @@ export default function Home() {
     return () => {
       Engine.onStateChange = null;
       Engine.onHealthChange = null;
+      Engine.onTraitsChange = null;
       window.removeEventListener("switch-to-classic", handleSwitchClassic);
       window.removeEventListener("switch-to-menu", handleSwitchMenu);
     };
@@ -68,8 +73,10 @@ export default function Home() {
     setCoins(0);
     setGems(0);
     setHealth(100);
+    setCollectedTraits([]);
     Engine.coinsCount = 0;
     Engine.gemsCount = 0;
+    Engine.collectedTraits = [];
     Engine.victoryTriggered = false;
     
     Engine.switchState("playing");
@@ -138,7 +145,7 @@ export default function Home() {
         <section id="game-view" className="view-section active" style={{ display: "block" }}>
           
           {/* Dynamic HUD selector */}
-          <HUD coins={coins} gems={gems} health={health} />
+          <HUD coins={coins} gems={gems} health={health} collectedTraits={collectedTraits} />
 
           {/* HTML5 Canvas Binder */}
           <GameCanvas 
@@ -155,6 +162,7 @@ export default function Home() {
                 <span><span className="key-badge">A</span> <span className="key-badge">D</span> / <span className="key-badge">←</span> <span className="key-badge">→</span> Walk</span>
                 <span><span className="key-badge">Space</span> Jump</span>
                 <span><span className="key-badge">W</span> / <span className="key-badge">↑</span> Ladder / Open Chest</span>
+                <span><span className="key-badge">F</span> / <span className="key-badge">J</span> Attack</span>
               </>
             ) : (
               <span>Touch joysticks active</span>

@@ -48,13 +48,27 @@ export default function ParchmentModal({
         );
       }
       case "skills": {
+        const hardSkills = portfolioData.skills.filter(s => s.category === "Hard Skills");
+        const softSkills = portfolioData.skills.filter(s => s.category === "Soft Skills");
         return (
           <div style={{ maxHeight: "45vh", overflowY: "auto", paddingRight: "8px" }}>
-            {portfolioData.skills.map((s, idx) => (
-              <div key={idx} style={{ marginBottom: "12px", borderBottom: "1px dashed rgba(46,28,16,0.15)", paddingBottom: "8px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontFamily: "Cinzel" }}>
+            <h4 style={{ fontFamily: "Cinzel", color: "#8c510a", fontWeight: 700, borderBottom: "1.5px solid rgba(46,28,16,0.2)", paddingBottom: "3px", marginBottom: "12px" }}>Hard Skills</h4>
+            {hardSkills.map((s, idx) => (
+              <div key={idx} style={{ marginBottom: "12px", borderBottom: "1px dashed rgba(46,28,16,0.1)", paddingBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontFamily: "Cinzel", fontSize: "0.95rem" }}>
                   <span>{s.name}</span>
                   <span style={{ color: "#8c510a" }}>{s.level}% Mastery</span>
+                </div>
+                <p style={{ fontSize: "0.85rem", lineHeight: 1.3, color: "#444", marginTop: "2px" }}>{s.description}</p>
+              </div>
+            ))}
+
+            <h4 style={{ fontFamily: "Cinzel", color: "#8c510a", fontWeight: 700, borderBottom: "1.5px solid rgba(46,28,16,0.2)", paddingBottom: "3px", marginTop: "20px", marginBottom: "12px" }}>Soft Skills</h4>
+            {softSkills.map((s, idx) => (
+              <div key={idx} style={{ marginBottom: "12px", borderBottom: "1px dashed rgba(46,28,16,0.1)", paddingBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontFamily: "Cinzel", fontSize: "0.95rem" }}>
+                  <span>{s.name}</span>
+                  <span style={{ color: "#8c510a" }}>Core Strength</span>
                 </div>
                 <p style={{ fontSize: "0.85rem", lineHeight: 1.3, color: "#444", marginTop: "2px" }}>{s.description}</p>
               </div>

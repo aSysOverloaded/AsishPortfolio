@@ -3,6 +3,7 @@
    ========================================================================== */
 
 import { Coin, Gem, TreasureChest, Ladder, Decoration, GameEntity, Spikes, PotionJar, Boss, Rope } from "./Items";
+import { Sound } from "./Sound";
 
 const TILE_SIZE = 32;
 const MAP_ROWS = 18;
@@ -20,6 +21,9 @@ for (let c = 0; c <= 22; c++) {
   LEVEL_GRID[17][c] = 2;
 }
 
+// Destructible solid barrels sitting on the docks
+LEVEL_GRID[14][4] = 7;
+
 // 2. High ladder tower on docks
 for (let r = 9; r <= 14; r++) {
   LEVEL_GRID[r][16] = 3; // Ladder block
@@ -28,10 +32,15 @@ LEVEL_GRID[9][15] = 1; // Platform next to ladder top
 LEVEL_GRID[9][16] = 3; // Keep top of ladder climbable, not solid!
 LEVEL_GRID[9][17] = 1;
 
-// 3. Skills Valley floating bridge (Cols 27 to 48)
+// 3. Skills Valley floating bridge (curated wider platforms for comfortable balancing)
+LEVEL_GRID[14][25] = 1;
 LEVEL_GRID[14][26] = 1;
+LEVEL_GRID[12][28] = 1;
 LEVEL_GRID[12][29] = 1;
+LEVEL_GRID[12][30] = 1;
 LEVEL_GRID[11][32] = 1;
+LEVEL_GRID[11][33] = 1;
+LEVEL_GRID[11][34] = 1;
 
 // High Education platform next to rope swing (Cols 43 to 45, row 6)
 LEVEL_GRID[6][43] = 1;
@@ -41,16 +50,9 @@ LEVEL_GRID[6][45] = 1;
 for (let c = 35; c <= 45; c++) {
   LEVEL_GRID[10][c] = 4; // Hanging bridge planks
 }
-for (let r = 10; r <= 15; r++) {
-  LEVEL_GRID[r][48] = 3; // Ladder down
-}
-for (let c = 47; c <= 49; c++) {
-  LEVEL_GRID[16][c] = 1;
-  LEVEL_GRID[17][c] = 2;
-}
 
-// 4. Temple ruins project shrines (Cols 52 to 74)
-for (let c = 52; c <= 57; c++) {
+// 4. Temple ruins project shrines (Cols 48 to 74)
+for (let c = 48; c <= 57; c++) {
   LEVEL_GRID[15][c] = 5; // Mossy stone temple brick
   LEVEL_GRID[16][c] = 6;
   LEVEL_GRID[17][c] = 6;
@@ -78,6 +80,7 @@ for (let c = 82; c < 100; c++) {
   LEVEL_GRID[16][c] = 2;
   LEVEL_GRID[17][c] = 2;
 }
+LEVEL_GRID[14][83] = 7; // Destructible solid barrel at the harbor docks
 
 // Ship high platform deck (Cols 89 to 99)
 for (let c = 89; c <= 99; c++) {
@@ -115,7 +118,39 @@ export class Level {
   public isSolid(col: number, row: number): boolean {
     if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return false;
     const tile = LEVEL_GRID[row][col];
-    return tile === 1 || tile === 2 || tile === 4 || tile === 5 || tile === 6;
+    return tile === 1 || tile === 2 || tile === 4 || tile === 5 || tile === 6 || tile === 7;
+  }
+
+  public getTileAt(col: number, row: number): number {
+    if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return 0;
+    return LEVEL_GRID[row][col];
+  }
+
+  public setTileAt(col: number, row: number, value: number) {
+    if (col < 0 || col >= MAP_COLS || row < 0 || row >= MAP_ROWS) return;
+    LEVEL_GRID[row][col] = value;
+  }
+
+  public breakBarrel(col: number, row: number, engine: any) {
+    if (this.getTileAt(col, row) !== 7) return;
+    this.setTileAt(col, row, 0);
+    Sound.playHit();
+    
+    // Spawn floating text
+    engine.spawnTextPopup("Barrel Smashed!", col * this.tileSize + 16, row * this.tileSize - 10, "#ffd700");
+
+    // Spawn random loot
+    const rand = Math.random();
+    const spawnX = col * this.tileSize + 6;
+    const spawnY = row * this.tileSize + 6;
+
+    if (rand < 0.5) {
+      this.entities.push(new Coin(spawnX, spawnY, "Loot Cache"));
+    } else if (rand < 0.8) {
+      this.entities.push(new Gem(spawnX, spawnY, "#39ff14", "Loot Gem"));
+    } else {
+      this.entities.push(new PotionJar(spawnX, spawnY, "Developer's Elixir"));
+    }
   }
 
   public isLadderAt(x: number, y: number): boolean {
@@ -128,7 +163,7 @@ export class Level {
   private initializeEntities() {
     // Treasures Chests
     this.entities.push(new TreasureChest(510, 250, "about-modal", "Scroll of Genesis (About Me)", "about"));
-    this.entities.push(new TreasureChest(1010, 314, "skills-modal", "Cove Vault (Skills)", "skills"));
+    this.entities.push(new TreasureChest(1040, 314, "skills-modal", "Cove Vault (Skills)", "skills"));
     this.entities.push(new TreasureChest(1728, 346, "projects-modal", "Captain's Ledger (Projects)", "projects"));
     this.entities.push(new TreasureChest(1980, 410, "experience-modal", "Chronicles of Battle (Experience)", "experience"));
     this.entities.push(new TreasureChest(2944, 250, "contact-modal", "Message Dispatch (Contact)", "contact"));
@@ -137,28 +172,26 @@ export class Level {
     // Swinging Pendulum Rope (pivotX = 1136, pivotY = 64, length = 180)
     this.entities.push(new Rope(1136, 64, 180));
 
-    // Gold Coins Placements
-    const coinPlacements = [
-      [150, 420], [200, 420], [250, 420],
-      [512, 190], [544, 190],
-      [880, 350], [970, 290],
-      [1220, 210], [1280, 160], [1340, 170],
-      [2050, 350], [2100, 320],
-      [2680, 420], [2750, 420],
-      [2940, 200], [3000, 200]
+    // Gold Coins Placements (5 unique soft skills, widely spaced)
+    const coinPlacements: { x: number; y: number; trait: string }[] = [
+      { x: 200, y: 420, trait: "Ownership" },
+      { x: 528, y: 190, trait: "Cross-team collaboration" },
+      { x: 780, y: 350, trait: "Problem solving" },
+      { x: 1280, y: 160, trait: "Fast ramp-up" },
+      { x: 2680, y: 420, trait: "Initiative" }
     ];
     coinPlacements.forEach(pos => {
-      this.entities.push(new Coin(pos[0], pos[1]));
+      this.entities.push(new Coin(pos.x, pos.y, pos.trait));
     });
 
-    // Glowing Skill Gems
+    // Glowing Skill Gems (6 Hard Skills with matching custom colors and spaced positions)
     const gemPlacements = [
-      { x: 380, y: 420, color: "#61dafb", skill: "React / Next" },
-      { x: 830, y: 390, color: "#f7df1e", skill: "JavaScript" },
-      { x: 930, y: 320, color: "#38b2ac", skill: "CSS / Tailwind" },
-      { x: 1020, y: 290, color: "#68a063", skill: "Node.js" },
-      { x: 1530, y: 320, color: "#336791", skill: "Database" },
-      { x: 2150, y: 260, color: "#2496ed", skill: "DevOps & Cloud" }
+      { x: 380, y: 420, color: "#61dafb", skill: "React / Angular" },
+      { x: 740, y: 390, color: "#3178c6", skill: "TypeScript / Node.js" },
+      { x: 928, y: 320, color: "#a855f7", skill: "LLMs & Generative AI" },
+      { x: 1100, y: 200, color: "#10b981", skill: "Test automation" },
+      { x: 1530, y: 320, color: "#22c55e", skill: "Databases" },
+      { x: 2150, y: 260, color: "#f97316", skill: "Security & auth" }
     ];
     gemPlacements.forEach(pos => {
       this.entities.push(new Gem(pos.x, pos.y, pos.color, pos.skill));
@@ -174,23 +207,18 @@ export class Level {
     }
 
     // Decorations
-    this.decorations.push(new Decoration(80, 448, "barrel"));
-    this.decorations.push(new Decoration(120, 448, "barrel"));
-    this.decorations.push(new Decoration(96, 408, "flag")); // Stands on initial docks floor (y=480, height=72)
-    this.decorations.push(new Decoration(2600, 448, "barrel"));
+    this.decorations.push(new Decoration(108, 408, "flag")); // Stands on initial docks floor (y=480, height=72)
     this.decorations.push(new Decoration(3136, 216, "flag")); // Stands on pirate ship deck floor (y=288, height=72)
 
     // Spaghetti Code Spikes placement (Static Hazards sitting perfectly on floor surfaces)
-    this.entities.push(new Spikes(320, 460)); // Stands on initial docks floor (Col 10, y=480)
-    this.entities.push(new Spikes(1280, 300)); // Stands in the middle of hanging bridge (Col 40, y=320)
-    this.entities.push(new Spikes(2048, 428)); // Stands on the stone pod podium of shrine 2 (Col 64, y=448)
-    this.entities.push(new Spikes(2720, 460)); // Stands on ship harbor dock floor just before ladder (Col 85, y=480)
+    this.entities.push(new Spikes(320, 460, "Spaghetti Code")); // Stands on initial docks floor (Col 10, y=480)
+    this.entities.push(new Spikes(1280, 300, "Merge Conflict")); // Stands in the middle of hanging bridge (Col 40, y=320)
+    this.entities.push(new Spikes(2048, 428, "Unhandled Promise")); // Stands on the stone pod podium of shrine 2 (Col 64, y=448)
 
     // Refactor Potion Jar placements (Heals placed at logical exploration spots)
-    this.entities.push(new PotionJar(480, 256)); // Docks tower elevated platform (Col 15, y=288)
-    this.entities.push(new PotionJar(960, 280)); // Floating in mid-air to reward a jump in Skills Valley (Col 30, y=320)
-    this.entities.push(new PotionJar(1728, 352)); // Sitting on shrine 1 elevated podium next to Projects chest (Col 54, y=384)
-    this.entities.push(new PotionJar(2880, 256)); // Sitting on ship deck (Col 90, y=288)
+    this.entities.push(new PotionJar(480, 256, "High Focus & Energy")); // Docks tower elevated platform (Col 15, y=288)
+    this.entities.push(new PotionJar(1728, 352, "Debugging Persistence")); // Sitting on shrine 1 elevated podium next to Projects chest (Col 54, y=384)
+    this.entities.push(new PotionJar(2880, 256, "Rapid Tech Adoption")); // Sitting on ship deck (Col 90, y=288)
     
     // Boss Nemesis Captain Red-Tail (Code review duel boss)
     this.entities.push(new Boss(3072, 240)); // Stands on pirate ship deck at column 96 (y=288)
@@ -204,7 +232,6 @@ export class Level {
     this.drawParallaxBg(ctx, cameraX);
 
     this.ladders.forEach(lad => lad.draw(ctx, cameraX));
-    this.decorations.forEach(dec => dec.draw(ctx, cameraX));
 
     ctx.save();
     const startCol = Math.floor(cameraX / this.tileSize);
@@ -262,11 +289,24 @@ export class Level {
           ctx.strokeStyle = "#07171d";
           ctx.lineWidth = 1.5;
           ctx.strokeRect(px, py, this.tileSize, this.tileSize);
+        } else if (tile === 7) {
+          ctx.save();
+          ctx.fillStyle = "#2e1c10";
+          ctx.fillRect(px + 4, py + 2, 24, 30);
+          ctx.strokeStyle = "#523624";
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(px + 4, py + 2, 24, 30);
+          
+          ctx.fillStyle = "#555";
+          ctx.fillRect(px + 4, py + 8, 24, 3);
+          ctx.fillRect(px + 4, py + 22, 24, 3);
+          ctx.restore();
         }
       }
     }
     ctx.restore();
 
+    this.decorations.forEach(dec => dec.draw(ctx, cameraX));
     this.entities.forEach(ent => ent.draw(ctx, cameraX));
     this.drawWaterHazard(ctx, cameraX);
   }

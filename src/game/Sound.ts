@@ -209,6 +209,52 @@ class SoundSystem {
     osc.stop(now + 0.32);
   }
 
+  // Synthesize Retro Sword Slash Swing (High to low triangle frequency sweep)
+  public playSlash() {
+    if (!this.sfxEnabled || !this.ctx || !this.sfxVolume) return;
+    this.resumeContext();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
+
+    gainNode.gain.setValueAtTime(0.4, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+    osc.connect(gainNode);
+    gainNode.connect(this.sfxVolume);
+
+    osc.start(now);
+    osc.stop(now + 0.13);
+  }
+
+  // Synthesize Retro Wood Hit/Barrel Break Sound (Low sawtooth sweep + noise-like crunch)
+  public playHit() {
+    if (!this.sfxEnabled || !this.ctx || !this.sfxVolume) return;
+    this.resumeContext();
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gainNode = this.ctx.createGain();
+
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.linearRampToValueAtTime(40, now + 0.15);
+
+    gainNode.gain.setValueAtTime(0.5, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+    osc.connect(gainNode);
+    gainNode.connect(this.sfxVolume);
+
+    osc.start(now);
+    osc.stop(now + 0.16);
+  }
+
   // 5. Looping Background Shanty
   public playShantyLoop() {
     if (!this.musicEnabled || !this.ctx || !this.musicVolume) return;

@@ -5,7 +5,7 @@
 import { Sound } from "./Sound";
 
 export interface IEngine {
-  addCoins(amount: number): void;
+  addCoins(amount: number, trait?: string): void;
   addGem(amount: number): void;
   spawnTextPopup(text: string, x: number, y: number, color?: string): void;
   openPortfolioModal(contentKey: string, title: string): void;
@@ -59,11 +59,13 @@ export abstract class GameEntity {
 
 // Golden Coin
 export class Coin extends GameEntity {
+  public trait: string;
   private bounceTimer: number;
   private angle: number;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, trait = "Soft Skill") {
     super(x, y, 20, 20);
+    this.trait = trait;
     this.bounceTimer = Math.random() * 100;
     this.angle = Math.random() * Math.PI;
   }
@@ -76,9 +78,9 @@ export class Coin extends GameEntity {
 
     if (rectIntersect(this, player)) {
       this.collected = true;
-      engine.addCoins(1);
+      engine.addCoins(1, this.trait);
       Sound.playCoin();
-      engine.spawnTextPopup("+100 Loot", this.x + 10, this.y);
+      engine.spawnTextPopup(`+ ${this.trait}`, this.x + 10, this.y, "#ffd700");
     }
   }
 
@@ -488,78 +490,133 @@ export class Decoration extends GameEntity {
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Flag Banner (drawn on the right side of the pole)
-      // Waving gradient effect
-      const grad = ctx.createLinearGradient(px + 4, 0, px + 36, 0);
-      grad.addColorStop(0, "#222222");
-      grad.addColorStop(0.25, "#0c0c0c");
-      grad.addColorStop(0.5, "#2a2a2a");
-      grad.addColorStop(0.75, "#050505");
-      grad.addColorStop(1, "#181818");
-      
-      ctx.fillStyle = grad;
-      ctx.fillRect(px + 4, this.y + 2, 32, 22);
-      
-      ctx.strokeStyle = "#000000";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(px + 4, this.y + 2, 32, 22);
+      // Waving Flag Banner Animation
+      const time = Date.now();
+      const getWaveY = (dx: number) => {
+        // Wave starts at 0 at the pole, and increases to 3.5px amplitude at the end
+        const amp = (dx / 32) * 3.5;
+        return Math.sin(time * 0.008 - dx * 0.15) * amp;
+      };
 
-      // Skull & Crossbones Emblem (Jolly Roger)
-      // 1. Draw the crossed bones (behind skull)
-      ctx.fillStyle = "#eeeeee";
+      // Draw Flag Banner (drawn on the right side of the pole)
+      // Waving horizontal slices with fold shading
+      for (let dx = 0; dx <= 32; dx++) {
+        const waveY = getWaveY(dx);
+        const slope = Math.cos(time * 0.008 - dx * 0.15);
+        const shade = 1.0 + slope * 0.25 * (dx / 32);
+        
+        // Dark gray/black pirate flag base color shaded by waves
+        const cVal = Math.max(10, Math.min(60, Math.floor(22 * shade)));
+        ctx.fillStyle = `rgb(${cVal}, ${cVal}, ${cVal})`;
+        ctx.fillRect(px + 4 + dx, this.y + 2 + waveY, 1.5, 22);
+      }
+
+      // Draw tattered / waving borders
+      ctx.strokeStyle = "#000000";
+      ctx.lineWidth = 1;
       
-      // Bone joints (knobs at the ends)
-      // Top-left
-      ctx.beginPath(); ctx.arc(px + 10, this.y + 6, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(px + 8, this.y + 8, 2, 0, Math.PI * 2); ctx.fill();
-      // Bottom-left
-      ctx.beginPath(); ctx.arc(px + 10, this.y + 20, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(px + 8, this.y + 18, 2, 0, Math.PI * 2); ctx.fill();
-      // Top-right
-      ctx.beginPath(); ctx.arc(px + 30, this.y + 6, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(px + 32, this.y + 8, 2, 0, Math.PI * 2); ctx.fill();
-      // Bottom-right
-      ctx.beginPath(); ctx.arc(px + 30, this.y + 20, 2, 0, Math.PI * 2); ctx.fill();
-      ctx.beginPath(); ctx.arc(px + 32, this.y + 18, 2, 0, Math.PI * 2); ctx.fill();
+      // Top border
+      ctx.beginPath();
+      for (let dx = 0; dx <= 32; dx++) {
+        const waveY = getWaveY(dx);
+        if (dx === 0) ctx.moveTo(px + 4 + dx, this.y + 2 + waveY);
+        else ctx.lineTo(px + 4 + dx, this.y + 2 + waveY);
+      }
+      ctx.stroke();
+
+      // Bottom border
+      ctx.beginPath();
+      for (let dx = 0; dx <= 32; dx++) {
+        const waveY = getWaveY(dx);
+        if (dx === 0) ctx.moveTo(px + 4 + dx, this.y + 24 + waveY);
+        else ctx.lineTo(px + 4 + dx, this.y + 24 + waveY);
+      }
+      ctx.stroke();
+
+      // Jagged / tattered right edge
+      ctx.beginPath();
+      ctx.moveTo(px + 36, this.y + 2 + getWaveY(32));
+      ctx.lineTo(px + 34, this.y + 7 + getWaveY(30));
+      ctx.lineTo(px + 36, this.y + 13 + getWaveY(32));
+      ctx.lineTo(px + 33, this.y + 18 + getWaveY(29));
+      ctx.lineTo(px + 36, this.y + 24 + getWaveY(32));
+      ctx.stroke();
+
+      // Helper drawing functions for skull/bones that follow the wave
+      const drawWavyArc = (x: number, y: number, r: number, startAngle: number, endAngle: number, color: string) => {
+        const dx = x - (px + 4);
+        const wave = getWaveY(dx);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y + wave, r, startAngle, endAngle);
+        ctx.fill();
+      };
+
+      const drawWavyLine = (x1: number, y1: number, x2: number, y2: number, width: number, color: string) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1 + getWaveY(x1 - (px + 4)));
+        ctx.lineTo(x2, y2 + getWaveY(x2 - (px + 4)));
+        ctx.stroke();
+      };
+
+      const drawWavyRect = (x: number, y: number, w: number, h: number, color: string) => {
+        ctx.fillStyle = color;
+        for (let ix = 0; ix < w; ix++) {
+          const curX = x + ix;
+          const dx = curX - (px + 4);
+          const wave = getWaveY(dx);
+          ctx.fillRect(curX, y + wave, 1, h);
+        }
+      };
+
+      // Skull & Crossbones Emblem (Jolly Roger) - Waving dynamically
+
+      // 1. Draw the crossed bones (behind skull)
+      // Top-left joints
+      drawWavyArc(px + 10, this.y + 6, 2, 0, Math.PI * 2, "#eeeeee");
+      drawWavyArc(px + 8, this.y + 8, 2, 0, Math.PI * 2, "#eeeeee");
+      // Bottom-left joints
+      drawWavyArc(px + 10, this.y + 20, 2, 0, Math.PI * 2, "#eeeeee");
+      drawWavyArc(px + 8, this.y + 18, 2, 0, Math.PI * 2, "#eeeeee");
+      // Top-right joints
+      drawWavyArc(px + 30, this.y + 6, 2, 0, Math.PI * 2, "#eeeeee");
+      drawWavyArc(px + 32, this.y + 8, 2, 0, Math.PI * 2, "#eeeeee");
+      // Bottom-right joints
+      drawWavyArc(px + 30, this.y + 20, 2, 0, Math.PI * 2, "#eeeeee");
+      drawWavyArc(px + 32, this.y + 18, 2, 0, Math.PI * 2, "#eeeeee");
 
       // Crossing bone shafts
-      ctx.strokeStyle = "#eeeeee";
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(px + 10, this.y + 7);
-      ctx.lineTo(px + 30, this.y + 19);
-      ctx.moveTo(px + 30, this.y + 7);
-      ctx.lineTo(px + 10, this.y + 19);
-      ctx.stroke();
+      drawWavyLine(px + 10, this.y + 7, px + 30, this.y + 19, 2.2, "#eeeeee");
+      drawWavyLine(px + 30, this.y + 7, px + 10, this.y + 19, 2.2, "#eeeeee");
 
-      // 2. Draw the Skull
-      ctx.fillStyle = "#eeeeee";
-      // Skull head
-      ctx.beginPath();
-      ctx.arc(px + 20, this.y + 11, 5, 0, Math.PI * 2);
-      ctx.fill();
-      // Skull jaw
-      ctx.fillRect(px + 18, this.y + 14, 4, 3.5);
+      // 2. Draw the Skull Base
+      drawWavyArc(px + 20, this.y + 11, 5, 0, Math.PI * 2, "#eeeeee");
+      drawWavyRect(px + 18, this.y + 14, 4, 3.5, "#eeeeee");
 
-      // Eyes (black)
-      ctx.fillStyle = "#0c0c0c";
-      ctx.beginPath();
-      ctx.arc(px + 18.2, this.y + 11, 1.2, 0, Math.PI * 2);
-      ctx.arc(px + 21.8, this.y + 11, 1.2, 0, Math.PI * 2);
-      ctx.fill();
+      // 3. Draw Claw's Custom Red Bandana
+      // Main head wrap
+      drawWavyRect(px + 15, this.y + 6.5, 10, 2.2, "#d12222");
+      // Bandana tie knot on the left
+      drawWavyArc(px + 14, this.y + 7.5, 1.5, 0, Math.PI * 2, "#d12222");
+      drawWavyLine(px + 14, this.y + 7.5, px + 11, this.y + 10.5, 1.5, "#d12222");
+      drawWavyLine(px + 14, this.y + 7.5, px + 12, this.y + 12.5, 1.5, "#d12222");
 
-      // Nose cavity
-      ctx.fillRect(px + 19.5, this.y + 13, 1, 1.2);
+      // 4. Eyes (Left eye is black, Right eye is Claw's Eyepatch)
+      // Left eye
+      drawWavyArc(px + 18.2, this.y + 11, 1.1, 0, Math.PI * 2, "#0c0c0c");
+      // Right eye covered by eyepatch
+      drawWavyArc(px + 21.8, this.y + 11, 1.8, 0, Math.PI * 2, "#0c0c0c");
+      // Eyepatch strap
+      drawWavyLine(px + 16, this.y + 8, px + 24, this.y + 13, 0.8, "#0c0c0c");
 
-      // Teeth notches
-      ctx.strokeStyle = "#0c0c0c";
-      ctx.lineWidth = 0.8;
-      ctx.beginPath();
-      ctx.moveTo(px + 19, this.y + 14.5);
-      ctx.lineTo(px + 19, this.y + 17);
-      ctx.moveTo(px + 21, this.y + 14.5);
-      ctx.lineTo(px + 21, this.y + 17);
-      ctx.stroke();
+      // 5. Nose cavity
+      drawWavyRect(px + 19.5, this.y + 13, 1, 1.2, "#0c0c0c");
+
+      // 6. Teeth notches
+      drawWavyLine(px + 19, this.y + 14.5, px + 19, this.y + 17, 0.8, "#0c0c0c");
+      drawWavyLine(px + 21, this.y + 14.5, px + 21, this.y + 17, 0.8, "#0c0c0c");
     }
 
     ctx.restore();
@@ -568,10 +625,12 @@ export class Decoration extends GameEntity {
 
 // Spikes / Spaghetti Code Hazard
 export class Spikes extends GameEntity {
+  public hazardLabel: string;
   private damageCooldown = 0;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, hazardLabel = "Spaghetti Code") {
     super(x, y, 32, 20);
+    this.hazardLabel = hazardLabel;
   }
 
   public update(player: IPlayer, engine: IEngine) {
@@ -583,7 +642,7 @@ export class Spikes extends GameEntity {
     if (rectIntersect(this, player)) {
       this.damageCooldown = 60; // 1 second invulnerability
       engine.updateHealth(-15);
-      engine.spawnTextPopup("-15 Health: Spaghetti Code!", this.x + 16, this.y - 10, "#d92b2b");
+      engine.spawnTextPopup(`-15 Health: ${this.hazardLabel}!`, this.x + 16, this.y - 10, "#d92b2b");
     }
   }
 
@@ -619,8 +678,11 @@ export class Spikes extends GameEntity {
 
 // Potion Jar / Refactor Boost
 export class PotionJar extends GameEntity {
-  constructor(x: number, y: number) {
+  public trait: string;
+
+  constructor(x: number, y: number, trait = "Developer's Coffee") {
     super(x, y, 20, 20);
+    this.trait = trait;
   }
 
   public update(player: IPlayer, engine: IEngine) {
@@ -631,7 +693,7 @@ export class PotionJar extends GameEntity {
       this.collected = true;
       engine.updateHealth(25);
       Sound.playCoin();
-      engine.spawnTextPopup("+25 Health: Potion - Developer's Coffee!", this.x + 10, this.y - 10, "#2ecc71");
+      engine.spawnTextPopup(`+25 Health: ${this.trait}!`, this.x + 10, this.y - 10, "#2ecc71");
     }
   }
 
@@ -687,6 +749,7 @@ export class PotionJar extends GameEntity {
 // Boss Nemesis / Technical Debt Captain
 export class Boss extends GameEntity {
   public dialogueTriggered = false;
+  public isNear = false;
 
   constructor(x: number, y: number) {
     super(x, y, 48, 48);
@@ -700,16 +763,28 @@ export class Boss extends GameEntity {
       h: this.h + 120
     };
 
-    if (rectIntersect(range, player) && !this.dialogueTriggered) {
-      this.dialogueTriggered = true;
-      engine.openPortfolioModal("victory", "The Code Review Duel!");
-    }
+    this.isNear = rectIntersect(range, player);
+  }
+
+  public triggerDialogue(engine: IEngine) {
+    this.dialogueTriggered = true;
+    Sound.playHit();
+    engine.openPortfolioModal("victory", "The Code Review Duel!");
   }
 
   public draw(ctx: CanvasRenderingContext2D, cameraX: number) {
     ctx.save();
     const px = this.x - cameraX;
     const py = this.y;
+
+    if (this.isNear && !this.dialogueTriggered) {
+      ctx.fillStyle = "#ffd700";
+      ctx.font = "bold 11px Cinzel";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#000";
+      ctx.shadowBlur = 4;
+      ctx.fillText("ATTACK [F/J] TO DUEL!", px + this.w/2, py - 12);
+    }
 
     // Draw Captain Red-Tail (Nemesis Red Cat) procedurally
     ctx.translate(px + this.w/2, py + this.h/2);

@@ -37,6 +37,7 @@ export class Player {
   public swingingRope: any = null;
   public ropeGrabCooldown = 0;
   public ropeClimbProgress = 1.0;
+  public attackTimer = 0;
 
   // Key configurations
   public keys = {
@@ -83,6 +84,7 @@ export class Player {
   public update(level: ILevel) {
     this.isWalking = false;
 
+    if (this.attackTimer > 0) this.attackTimer--;
     if (this.ropeGrabCooldown > 0) this.ropeGrabCooldown--;
 
     if (this.swingingRope) {
@@ -270,6 +272,49 @@ export class Player {
       this.hasDoubleJumped = true;
       this.jumpBufferTimer = 0;
       Sound.playJump();
+    }
+  }
+
+  public attack(level: any, engine: any) {
+    if (this.attackTimer > 0) return; // Prevent spamming
+    this.attackTimer = 12; // 12 frames of attack animation
+    Sound.playSlash();
+
+    // Check hit collision box in front of the player
+    const reach = 28;
+    const hitX = this.facingLeft ? (this.x - reach) : (this.x + this.w);
+    const hitRect = {
+      x: hitX,
+      y: this.y,
+      w: reach,
+      h: this.h
+    };
+
+    // Check tile collision (barrels)
+    const hitCenterX = this.facingLeft ? (this.x - reach) : (this.x + this.w + reach);
+    const col = Math.floor(hitCenterX / level.tileSize);
+    const row = Math.floor((this.y + this.h / 2) / level.tileSize);
+
+    if (level.getTileAt && level.getTileAt(col, row) === 7) {
+      level.breakBarrel(col, row, engine);
+    }
+
+    // Check entity collision (Boss)
+    if (level.entities) {
+      for (const ent of level.entities) {
+        if (typeof ent.triggerDialogue === "function" && !ent.dialogueTriggered) {
+          const entRect = { x: ent.x, y: ent.y, w: ent.w, h: ent.h };
+          const intersect = (
+            hitRect.x < entRect.x + entRect.w &&
+            hitRect.x + hitRect.w > entRect.x &&
+            hitRect.y < entRect.y + entRect.h &&
+            hitRect.y + hitRect.h > entRect.y
+          );
+          if (intersect) {
+            ent.triggerDialogue(engine);
+          }
+        }
+      }
     }
   }
 
@@ -530,7 +575,11 @@ export class Player {
     ctx.save();
     ctx.translate(-11, 2 + bodyBob);
     
-    if (this.isWalking && this.grounded) {
+    if (this.attackTimer > 0) {
+      const progress = (12 - this.attackTimer) / 12;
+      const swingAngle = -Math.PI / 4 + Math.sin(progress * Math.PI) * (Math.PI * 1.2);
+      ctx.rotate(swingAngle);
+    } else if (this.isWalking && this.grounded) {
       ctx.rotate((-limbSwing * Math.PI) / 180);
     }
     ctx.fillRect(-3, 0, 5, 8);
@@ -545,6 +594,15 @@ export class Player {
     ctx.quadraticCurveTo(-2, -14, -5, -15);
     ctx.quadraticCurveTo(-5, -8, -4, 7);
     ctx.fill();
+
+    if (this.attackTimer > 0 && this.attackTimer < 9) {
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.65)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -12, 10, -Math.PI / 2, Math.PI / 2);
+      ctx.stroke();
+    }
+
     ctx.restore();
 
     ctx.restore();

@@ -28,6 +28,8 @@ export class GameEngine {
   public gemsCount = 0;
   public victoryTriggered = false;
   
+  public collectedTraits: string[] = [];
+  
   private textPopups: TextPopup[] = [];
   private animationFrameId: number | null = null;
   private lastTime = 0;
@@ -40,6 +42,7 @@ export class GameEngine {
   public onGemsChange: ((count: number) => void) | null = null;
   public onHealthChange: ((health: number) => void) | null = null;
   public onStateChange: ((state: "menu" | "playing" | "classic") => void) | null = null;
+  public onTraitsChange: ((traits: string[]) => void) | null = null;
 
   constructor() {
     this.level = new Level();
@@ -105,9 +108,13 @@ export class GameEngine {
   }
 
   // Score stats
-  public addCoins(amount: number) {
+  public addCoins(amount: number, trait?: string) {
     this.coinsCount += amount;
+    if (trait && !this.collectedTraits.includes(trait)) {
+      this.collectedTraits.push(trait);
+    }
     if (this.onCoinsChange) this.onCoinsChange(this.coinsCount);
+    if (this.onTraitsChange) this.onTraitsChange(this.collectedTraits);
   }
 
   public addGem(amount: number) {
@@ -189,6 +196,12 @@ export class GameEngine {
           e.preventDefault();
           this.player.jump();
           break;
+        case "KeyF":
+        case "KeyJ":
+          if (this.level) {
+            this.player.attack(this.level, this);
+          }
+          break;
       }
     });
 
@@ -226,6 +239,10 @@ export class GameEngine {
 
     if (newState === "playing") {
       this.health = 100;
+      this.coinsCount = 0;
+      this.collectedTraits = [];
+      if (this.onCoinsChange) this.onCoinsChange(0);
+      if (this.onTraitsChange) this.onTraitsChange([]);
       if (this.onHealthChange) this.onHealthChange(100);
       if (this.player) this.player.resetToCheckpoint();
       Sound.resumeContext();

@@ -87,8 +87,9 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
           <h2 id="skills-heading">Super Skills</h2>
           <span className="section-header-line"></span>
         </div>
-        <div className="skills-grid">
-          {portfolioData.skills.map((s, idx) => (
+        <h3 style={{ fontFamily: "var(--font-heading)", color: "var(--color-gold-bright)", margin: "2rem 0 1.5rem 0", fontSize: "1.4rem" }}>Hard Skills</h3>
+        <div className="skills-grid" style={{ marginBottom: "3rem" }}>
+          {portfolioData.skills.filter(s => s.category === "Hard Skills").map((s, idx) => (
             <div key={idx} className="skill-card">
               <div className="skill-card-top">
                 <span className="skill-name">{s.name}</span>
@@ -104,6 +105,19 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
                 ></div>
               </div>
               <p className="skill-description">{s.description}</p>
+            </div>
+          ))}
+        </div>
+
+        <h3 style={{ fontFamily: "var(--font-heading)", color: "var(--color-gold-bright)", margin: "2rem 0 1.5rem 0", fontSize: "1.4rem" }}>Soft Skills</h3>
+        <div className="skills-grid">
+          {portfolioData.skills.filter(s => s.category === "Soft Skills").map((s, idx) => (
+            <div key={idx} className="skill-card" style={{ borderLeft: `3px solid ${s.color}` }}>
+              <div className="skill-card-top">
+                <span className="skill-name">{s.name}</span>
+                <span className="skill-level-dial" style={{ color: s.color, fontSize: "0.8rem", letterSpacing: "1px", textTransform: "uppercase" }}>Core Strength</span>
+              </div>
+              <p className="skill-description" style={{ marginTop: "10px" }}>{s.description}</p>
             </div>
           ))}
         </div>

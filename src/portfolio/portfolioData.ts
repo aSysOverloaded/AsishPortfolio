@@ -4,7 +4,7 @@
 
 export interface Skill {
   name: string;
-  category: "Frontend" | "Backend" | "Tools";
+  category: "Hard Skills" | "Soft Skills";
   level: number;
   color: string;
   description: string;
@@ -85,12 +85,17 @@ export const portfolioData: PortfolioData = {
   },
 
   skills: [
-    { name: "React / Next.js", category: "Frontend", level: 95, color: "#61dafb", description: "Building highly interactive SPA/SSR architectures with clean state management." },
-    { name: "JavaScript / TS", category: "Frontend", level: 90, color: "#f7df1e", description: "Deep knowledge of ES6+, asynchronous flows, custom Canvas renders, and type safety." },
-    { name: "CSS / Tailwind", category: "Frontend", level: 92, color: "#38b2ac", description: "Crafting beautiful responsive layouts, transitions, custom animations, and layout grids." },
-    { name: "Node.js / Express", category: "Backend", level: 88, color: "#68a063", description: "Designing secure, scalable RESTful and GraphQL APIs with robust middle-wares." },
-    { name: "Database (SQL/NoSQL)", category: "Backend", level: 85, color: "#336791", description: "Designing optimal data schemas in PostgreSQL, MongoDB, and Redis." },
-    { name: "DevOps & Tools", category: "Tools", level: 80, color: "#2496ed", description: "Automated pipelines, Git, Docker containerization, Vite bundling, and cloud deployments." }
+    { name: "React / Angular", category: "Hard Skills", level: 95, color: "#61dafb", description: "Production-grade frontend, real-time UI." },
+    { name: "TypeScript / Node.js", category: "Hard Skills", level: 93, color: "#3178c6", description: "Full-stack, APIs, middlewares." },
+    { name: "LLMs & Generative AI", category: "Hard Skills", level: 90, color: "#a855f7", description: "Orchestration, AI-driven UI generation." },
+    { name: "Test automation", category: "Hard Skills", level: 88, color: "#10b981", description: "Playwright, WebDriver.io, Karma." },
+    { name: "Databases", category: "Hard Skills", level: 85, color: "#22c55e", description: "PostgreSQL, MySQL, MongoDB." },
+    { name: "Security & auth", category: "Hard Skills", level: 87, color: "#f97316", description: "XSS prevention, OAuth, session flows." },
+    { name: "Ownership", category: "Soft Skills", level: 100, color: "#a855f7", description: "Led end-to-end features solo." },
+    { name: "Cross-team collaboration", category: "Soft Skills", level: 100, color: "#3178c6", description: "Coordinated changes across 4 teams." },
+    { name: "Problem solving", category: "Soft Skills", level: 100, color: "#10b981", description: "Top 5% on LeetCode globally." },
+    { name: "Fast ramp-up", category: "Soft Skills", level: 100, color: "#f7df1e", description: "Picked up complex RxJS codebase quickly." },
+    { name: "Initiative", category: "Soft Skills", level: 100, color: "#ec4899", description: "Researched competitors, defined scope." }
   ],
 
   projects: [
