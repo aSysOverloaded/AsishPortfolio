@@ -81,7 +81,7 @@ export default function HUD({ coins, gems, health, collectedTraits = [] }: HUDPr
                 })}
               </div>
               <div className="traits-dropdown-footer">
-                Collect gold coins to discover Asish's developer highlights!
+                Collect gold coins to discover Asish Panda's developer highlights!
               </div>
             </div>
           )}
@@ -89,7 +89,7 @@ export default function HUD({ coins, gems, health, collectedTraits = [] }: HUDPr
         
         <div className="hud-stat-item">
           <span className="hud-icon-gem" aria-hidden="true"></span>
-          <span id="hud-gem-count" style={{ fontSize: "0.85rem", fontFamily: "Cinzel", fontWeight: 700 }}>{gems} / 6 Skills</span>
+          <span id="hud-gem-count" style={{ fontSize: "0.85rem", fontFamily: "Cinzel", fontWeight: 700 }}>{gems} / 9 Skills</span>
         </div>
       </div>
     </div>

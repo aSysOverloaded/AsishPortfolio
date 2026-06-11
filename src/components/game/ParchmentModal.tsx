@@ -28,7 +28,7 @@ export default function ParchmentModal({
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Message sent by ${mName}! Captain Asish has received your avian scroll!`);
+    alert(`Message sent by ${mName}! Captain Asish Panda has received your avian scroll!`);
     setMName("");
     setMEmail("");
     setMMsg("");
@@ -48,27 +48,12 @@ export default function ParchmentModal({
         );
       }
       case "skills": {
-        const hardSkills = portfolioData.skills.filter(s => s.category === "Hard Skills");
-        const softSkills = portfolioData.skills.filter(s => s.category === "Soft Skills");
         return (
           <div style={{ maxHeight: "45vh", overflowY: "auto", paddingRight: "8px" }}>
-            <h4 style={{ fontFamily: "Cinzel", color: "#8c510a", fontWeight: 700, borderBottom: "1.5px solid rgba(46,28,16,0.2)", paddingBottom: "3px", marginBottom: "12px" }}>Hard Skills</h4>
-            {hardSkills.map((s, idx) => (
+            {portfolioData.skills.map((s, idx) => (
               <div key={idx} style={{ marginBottom: "12px", borderBottom: "1px dashed rgba(46,28,16,0.1)", paddingBottom: "8px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontFamily: "Cinzel", fontSize: "0.95rem" }}>
                   <span>{s.name}</span>
-                  <span style={{ color: "#8c510a" }}>{s.level}% Mastery</span>
-                </div>
-                <p style={{ fontSize: "0.85rem", lineHeight: 1.3, color: "#444", marginTop: "2px" }}>{s.description}</p>
-              </div>
-            ))}
-
-            <h4 style={{ fontFamily: "Cinzel", color: "#8c510a", fontWeight: 700, borderBottom: "1.5px solid rgba(46,28,16,0.2)", paddingBottom: "3px", marginTop: "20px", marginBottom: "12px" }}>Soft Skills</h4>
-            {softSkills.map((s, idx) => (
-              <div key={idx} style={{ marginBottom: "12px", borderBottom: "1px dashed rgba(46,28,16,0.1)", paddingBottom: "8px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontFamily: "Cinzel", fontSize: "0.95rem" }}>
-                  <span>{s.name}</span>
-                  <span style={{ color: "#8c510a" }}>Core Strength</span>
                 </div>
                 <p style={{ fontSize: "0.85rem", lineHeight: 1.3, color: "#444", marginTop: "2px" }}>{s.description}</p>
               </div>
@@ -102,6 +87,13 @@ export default function ParchmentModal({
                 <p style={{ fontSize: "0.9rem", lineHeight: 1.4, color: "#3e2d20" }}>{edu.description}</p>
               </div>
             ))}
+            
+            <h4 style={{ fontFamily: "Cinzel", color: "#8c510a", fontWeight: 700, borderBottom: "1.5px solid rgba(46,28,16,0.2)", paddingBottom: "3px", marginTop: "20px", marginBottom: "12px" }}>Achievements</h4>
+            <ul style={{ paddingLeft: "1.2rem", fontSize: "0.9rem", lineHeight: 1.4, color: "#3e2d20" }}>
+              {portfolioData.achievements.map((ach, idx) => (
+                <li key={idx} style={{ marginBottom: "6px" }}>{ach}</li>
+              ))}
+            </ul>
           </div>
         );
       }
@@ -120,8 +112,8 @@ export default function ParchmentModal({
                 </div>
                 <p style={{ fontSize: "0.9rem", lineHeight: 1.4, color: "#444" }}>{p.description}</p>
                 <div className="scroll-project-links">
-                  <a className="scroll-link" href={p.github} target="_blank" rel="noopener noreferrer">View Code 🐙</a>
-                  <a className="scroll-link" href={p.live} target="_blank" rel="noopener noreferrer">Live Vessel ⚓</a>
+                  {p.github && <a className="scroll-link" href={p.github} target="_blank" rel="noopener noreferrer">View Code 🐙</a>}
+                  {p.live && <a className="scroll-link" href={p.live} target="_blank" rel="noopener noreferrer">Live Vessel ⚓</a>}
                 </div>
               </div>
             ))}
@@ -202,11 +194,11 @@ export default function ParchmentModal({
               lineHeight: 1.45,
               color: "#3e2d20"
             }}>
-              <p style={{ margin: "6px 0" }}><strong>Captain Red-Tail:</strong> &ldquo;Halt, Claw! You think you can claim Asish's portfolio? Your ancient sails are no match for my legacy Spaghetti code!&rdquo;</p>
-              <p style={{ margin: "6px 0" }}><strong>Captain Claw:</strong> &ldquo;Your Spaghetti code is already obsolete, Red-Tail! Look at my HUD, I have harvested all of Asish's Tech Skills!&rdquo;</p>
+              <p style={{ margin: "6px 0" }}><strong>Captain Red-Tail:</strong> &ldquo;Halt, Claw! You think you can claim Asish Panda's portfolio? Your ancient sails are no match for my legacy Spaghetti code!&rdquo;</p>
+              <p style={{ margin: "6px 0" }}><strong>Captain Claw:</strong> &ldquo;Your Spaghetti code is already obsolete, Red-Tail! Look at my HUD, I have harvested all of Asish Panda's Tech Skills!&rdquo;</p>
               <p style={{ margin: "6px 0" }}><strong>Captain Red-Tail:</strong> &ldquo;Argh! Next.js? TypeScript? High-performance canvassing? Impossible! My technical debt... is crushing me!&rdquo;</p>
               <p style={{ margin: "6px 0", color: "#b33a3a", fontWeight: 700, fontStyle: "italic" }}>*POOF! Red-Tail's server crashes, and he flees into the legacy archives!*</p>
-              <p style={{ margin: "6px 0" }}><strong>Captain Claw:</strong> &ldquo;Victory! The codebase is refactored, and Captain Asish is ready for legendary developer hires!&rdquo;</p>
+              <p style={{ margin: "6px 0" }}><strong>Captain Claw:</strong> &ldquo;Victory! The codebase is refactored, and Captain Asish Panda is ready for legendary developer hires!&rdquo;</p>
             </div>
 
             <p style={{ lineHeight: 1.4, marginBottom: "1.2rem", fontSize: "0.95rem" }}>

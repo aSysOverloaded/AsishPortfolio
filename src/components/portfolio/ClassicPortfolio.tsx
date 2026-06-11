@@ -27,7 +27,7 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Ahoy, ${cName}! Your dispatch has been sent successfully. Captain Asish will get in touch at ${cEmail}!`);
+    alert(`Ahoy, ${cName}! Your dispatch has been sent successfully. Captain Asish Panda will get in touch at ${cEmail}!`);
     setCName("");
     setCEmail("");
     setCMsg("");
@@ -42,7 +42,7 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
       
       {/* 1. Navigation Header */}
       <nav className="classic-nav" aria-label="Main Navigation">
-        <span className="classic-logo">CAPTAIN ASISH</span>
+        <span className="classic-logo">CAPTAIN ASISH PANDA</span>
         <ul className="classic-nav-links">
           <li className="classic-nav-link"><a href="#about">About</a></li>
           <li className="classic-nav-link"><a href="#skills">Skills</a></li>
@@ -87,37 +87,13 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
           <h2 id="skills-heading">Super Skills</h2>
           <span className="section-header-line"></span>
         </div>
-        <h3 style={{ fontFamily: "var(--font-heading)", color: "var(--color-gold-bright)", margin: "2rem 0 1.5rem 0", fontSize: "1.4rem" }}>Hard Skills</h3>
-        <div className="skills-grid" style={{ marginBottom: "3rem" }}>
-          {portfolioData.skills.filter(s => s.category === "Hard Skills").map((s, idx) => (
-            <div key={idx} className="skill-card">
-              <div className="skill-card-top">
-                <span className="skill-name">{s.name}</span>
-                <span className="skill-level-dial" style={{ color: s.color }}>{s.level}%</span>
-              </div>
-              <div className="skill-bar-bg">
-                <div 
-                  className="skill-bar-fill" 
-                  style={{ 
-                    backgroundColor: s.color,
-                    width: animateBars ? `${s.level}%` : "0%"
-                  }}
-                ></div>
+        <div className="skills-grid" style={{ marginTop: "2rem" }}>
+          {portfolioData.skills.map((s, idx) => (
+            <div key={idx} className="skill-card" style={{ borderLeft: `3.5px solid ${s.color}`, paddingLeft: "15px" }}>
+              <div className="skill-card-top" style={{ marginBottom: "6px" }}>
+                <span className="skill-name" style={{ fontWeight: 700, fontSize: "1.1rem" }}>{s.name}</span>
               </div>
               <p className="skill-description">{s.description}</p>
-            </div>
-          ))}
-        </div>
-
-        <h3 style={{ fontFamily: "var(--font-heading)", color: "var(--color-gold-bright)", margin: "2rem 0 1.5rem 0", fontSize: "1.4rem" }}>Soft Skills</h3>
-        <div className="skills-grid">
-          {portfolioData.skills.filter(s => s.category === "Soft Skills").map((s, idx) => (
-            <div key={idx} className="skill-card" style={{ borderLeft: `3px solid ${s.color}` }}>
-              <div className="skill-card-top">
-                <span className="skill-name">{s.name}</span>
-                <span className="skill-level-dial" style={{ color: s.color, fontSize: "0.8rem", letterSpacing: "1px", textTransform: "uppercase" }}>Core Strength</span>
-              </div>
-              <p className="skill-description" style={{ marginTop: "10px" }}>{s.description}</p>
             </div>
           ))}
         </div>
@@ -147,8 +123,8 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
                   ))}
                 </div>
                 <div className="project-links">
-                  <a href={p.github} className="project-link" target="_blank" rel="noopener noreferrer">Code (GitHub) →</a>
-                  <a href={p.live} className="project-link" target="_blank" rel="noopener noreferrer">Live Demo →</a>
+                  {p.github && <a href={p.github} className="project-link" target="_blank" rel="noopener noreferrer">Code (GitHub) →</a>}
+                  {p.live && <a href={p.live} className="project-link" target="_blank" rel="noopener noreferrer">Live Demo →</a>}
                 </div>
               </div>
             </div>
@@ -194,6 +170,19 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
         </div>
       </section>
 
+      {/* 6.6. Achievements Section */}
+      <section id="achievements" className="classic-section" aria-labelledby="achievements-heading">
+        <div className="section-header">
+          <h2 id="achievements-heading">Trophies & Milestones (Achievements)</h2>
+          <span className="section-header-line"></span>
+        </div>
+        <ul style={{ paddingLeft: "1.5rem", fontSize: "1rem", lineHeight: 1.7, opacity: 0.9 }}>
+          {portfolioData.achievements.map((ach, idx) => (
+            <li key={idx} style={{ marginBottom: "8px" }}>{ach}</li>
+          ))}
+        </ul>
+      </section>
+
       {/* 7. Contact Section */}
       <section id="contact" className="classic-section" aria-labelledby="contact-heading">
         <div className="section-header">
@@ -215,21 +204,21 @@ export default function ClassicPortfolio({ onToggleGame }: ClassicPortfolioProps
                 <div className="contact-icon-box">🐙</div>
                 <div className="contact-method-details">
                   <h4>GitHub</h4>
-                  <p><a href={github} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>github.com/profile</a></p>
+                  <p><a href={github} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>github.com/aSysOverloaded</a></p>
                 </div>
               </div>
               <div className="contact-method-item">
                 <div className="contact-icon-box">💼</div>
                 <div className="contact-method-details">
                   <h4>LinkedIn</h4>
-                  <p><a href={linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>linkedin.com/in/profile</a></p>
+                  <p><a href={linkedin} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>linkedin.com/in/asishpanda-ap</a></p>
                 </div>
               </div>
               <div className="contact-method-item">
                 <div className="contact-icon-box">🐦</div>
                 <div className="contact-method-details">
                   <h4>Twitter</h4>
-                  <p><a href={twitter} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>twitter.com/profile</a></p>
+                  <p><a href={twitter} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>x.com/aSys_Overloaded</a></p>
                 </div>
               </div>
             </div>

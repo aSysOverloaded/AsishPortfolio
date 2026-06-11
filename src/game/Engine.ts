@@ -238,13 +238,20 @@ export class GameEngine {
     if (this.onStateChange) this.onStateChange(newState);
 
     if (newState === "playing") {
+      this.level = new Level(); // Recreate level (resets all chests, coins, gems, barrels, etc.)
+      this.player = new Player(100, 420); // Recreate player at start
+      
       this.health = 100;
       this.coinsCount = 0;
+      this.gemsCount = 0;
       this.collectedTraits = [];
+      this.victoryTriggered = false;
+      
       if (this.onCoinsChange) this.onCoinsChange(0);
+      if (this.onGemsChange) this.onGemsChange(0);
       if (this.onTraitsChange) this.onTraitsChange([]);
       if (this.onHealthChange) this.onHealthChange(100);
-      if (this.player) this.player.resetToCheckpoint();
+      
       Sound.resumeContext();
       if (Sound.musicEnabled) {
         Sound.stopShantyLoop();

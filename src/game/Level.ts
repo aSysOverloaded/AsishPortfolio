@@ -184,14 +184,17 @@ export class Level {
       this.entities.push(new Coin(pos.x, pos.y, pos.trait));
     });
 
-    // Glowing Skill Gems (6 Hard Skills with matching custom colors and spaced positions)
+    // Glowing Skill Gems (9 Hard Skills with matching custom colors and spaced positions)
     const gemPlacements = [
-      { x: 380, y: 420, color: "#61dafb", skill: "React / Angular" },
-      { x: 740, y: 390, color: "#3178c6", skill: "TypeScript / Node.js" },
-      { x: 928, y: 320, color: "#a855f7", skill: "LLMs & Generative AI" },
-      { x: 1100, y: 200, color: "#10b981", skill: "Test automation" },
-      { x: 1530, y: 320, color: "#22c55e", skill: "Databases" },
-      { x: 2150, y: 260, color: "#f97316", skill: "Security & auth" }
+      { x: 380, y: 420, color: "#3178c6", skill: "JavaScript / TypeScript" },
+      { x: 580, y: 420, color: "#61dafb", skill: "React / Next.js" },
+      { x: 740, y: 390, color: "#c2185b", skill: "Angular & RxJS" },
+      { x: 928, y: 320, color: "#8cc84b", skill: "Node.js / Express" },
+      { x: 1100, y: 200, color: "#a855f7", skill: "Generative AI & LLMs" },
+      { x: 1320, y: 260, color: "#f68536", skill: "DevOps Automation" },
+      { x: 1620, y: 320, color: "#4db33d", skill: "PostgreSQL & MongoDB" },
+      { x: 1850, y: 280, color: "#ff6c37", skill: "REST APIs & Microservices" },
+      { x: 2150, y: 260, color: "#ffd700", skill: "Auth & Security" }
     ];
     gemPlacements.forEach(pos => {
       this.entities.push(new Gem(pos.x, pos.y, pos.color, pos.skill));

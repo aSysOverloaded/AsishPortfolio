@@ -7,7 +7,11 @@
 import React, { useState } from "react";
 import { Sound } from "../../game/Sound";
 
-export default function AudioControls() {
+interface AudioControlsProps {
+  gameState?: string;
+}
+
+export default function AudioControls({ gameState }: AudioControlsProps) {
   const [musicEnabled, setMusicEnabled] = useState(Sound.musicEnabled);
   const [sfxEnabled, setSfxEnabled] = useState(Sound.sfxEnabled);
 
@@ -22,7 +26,7 @@ export default function AudioControls() {
   };
 
   return (
-    <div id="audio-controls">
+    <div id="audio-controls" className={gameState}>
       <button 
         onClick={handleToggleMusic} 
         className={`audio-btn ${!musicEnabled ? "muted" : ""}`}

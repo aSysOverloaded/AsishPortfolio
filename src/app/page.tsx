@@ -105,7 +105,7 @@ export default function Home() {
   return (
     <>
       {/* Dynamic Floating Global Sound Controllers */}
-      <AudioControls />
+      <AudioControls gameState={gameState} />
 
       {/* ==========================================
            1. MAIN MENU VIEW (PIRATE THEME OVERLAY)
@@ -114,7 +114,7 @@ export default function Home() {
         <section id="main-menu" className="view-section active">
           <div className="menu-header">
             <span className="menu-logo-sub">Interactive Developer</span>
-            <h1 className="menu-logo">CAPTAIN ASISH</h1>
+            <h1 className="menu-logo">CAPTAIN ASISH PANDA</h1>
           </div>
 
           <div className="menu-box">

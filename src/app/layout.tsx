@@ -6,18 +6,18 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Captain Claw Portfolio | Asish - Full Stack Web Developer",
-  description: "Asish - Interactive Playable Portfolio Website themed after Captain Claw. Discover professional Full Stack Web Developer skills, projects, and milestones through a gamified adventure.",
+  title: "Captain Claw Portfolio | Asish Panda - Software Engineer",
+  description: "Asish Panda - Interactive Playable Portfolio Website themed after Captain Claw. Discover professional Software Engineer skills, projects, and milestones through a gamified adventure.",
   keywords: [
-    "Asish", 
+    "Asish Panda", 
     "Web Developer Portfolio", 
     "Captain Claw Game Portfolio", 
     "Playable Portfolio", 
-    "Full Stack Developer", 
+    "Software Engineer", 
     "HTML5 Canvas Game", 
     "TypeScript"
   ],
-  authors: [{ name: "Asish" }],
+  authors: [{ name: "Asish Panda" }],
 };
 
 export const viewport: Viewport = {
